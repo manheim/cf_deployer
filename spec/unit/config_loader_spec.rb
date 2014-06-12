@@ -9,6 +9,8 @@ describe "load config settings" do
     @front_end_json = File.expand_path("../../../tmp/front-end.json", __FILE__)
     @very_simple_json = File.expand_path("../../../tmp/very-simple.json", __FILE__)
     @json_with_erb = File.expand_path("../../../tmp/json-with-erb.json", __FILE__)
+    @broken_json = File.expand_path("../../../tmp/broken-json.json", __FILE__)
+    @broken_erb = File.expand_path("../../../tmp/broken_erb.json", __FILE__)
 
     base_json = <<-eos
     {
@@ -58,11 +60,17 @@ describe "load config settings" do
     }
     eos
 
-    File.open(@api_json, 'w') {|f| f.write(api_json) }
-    File.open(@base_json, 'w') {|f| f.write(base_json) }
-    File.open(@front_end_json, 'w') {|f| f.write(front_end_json) }
+    broken_json = '{ "Some_broken_json": "foo" '
+    broken_erb  = '{ "Some_broken_erb": "<%= [1, 2, 3].first("two") %>" }'
+    @broken_yaml = "something: [ :foo "
+
+    File.open(@api_json,         'w') {|f| f.write(api_json) }
+    File.open(@base_json,        'w') {|f| f.write(base_json) }
+    File.open(@front_end_json,   'w') {|f| f.write(front_end_json) }
     File.open(@very_simple_json, 'w') {|f| f.write(very_simple_json) }
-    File.open(@json_with_erb, 'w') {|f| f.write(json_with_erb) }
+    File.open(@json_with_erb,    'w') {|f| f.write(json_with_erb) }
+    File.open(@broken_json,      'w') {|f| f.write(broken_json) }
+    File.open(@broken_erb,       'w') {|f| f.write(broken_erb) }
 
 
     yaml_string = <<-eos
@@ -97,6 +105,8 @@ components:
       keep-previous-stack: false
   very-simple:
   json-with-erb:
+  #broken-json:
+  #broken_erb:
 
 inputs:
   require-basic-auth: false
@@ -104,7 +114,7 @@ inputs:
   mail-server: http://abc.com
   cname: myserver.com
 
-notify: 
+notify:
   - arn:root
 
 tags:
@@ -186,7 +196,7 @@ environments:
     config[:components][:api][:notify].should eq(['arn:root', 'arn:api', 'arn:dev'])
     config[:components][:'front-end'][:notify].should eq(['arn:root', 'arn:base', 'arn:dev'])
   end
-  
+
   it "notify option should be merged to environment context" do
     config =  CfDeployer::ConfigLoader.new.load({:'config-file' => @config_file, :environment => 'uat'})
     config[:components][:base][:notify].should eq(['arn:root', 'arn:base'])
@@ -320,6 +330,30 @@ environments:
   it "should ERB the component JSON and make the parsed template available" do
     config =  CfDeployer::ConfigLoader.new.load(:'config-file' => @config_file, :environment => 'DrWho')
     CfDeployer::ConfigLoader.component_json('json-with-erb', config[:components][:'json-with-erb']).should include('DrWho')
+  end
+
+  it 'should use error_document to show the broken document when parsing broken ERB' do
+    config = { :config_dir => File.dirname(@config_file) }
+    CfDeployer::ConfigLoader.any_instance.should_receive(:error_document)
+    expect { CfDeployer::ConfigLoader.component_json('broken_erb', config) }.to raise_error
+  end
+
+  it 'should use error_document to show the broken document when parsing broken json' do
+    loader = CfDeployer::ConfigLoader.new
+    config = loader.load(:'config-file' => @config_file, :environment => 'DrWho')
+    config[:components]['broken_json'] = {
+      :config_dir => config[:components][:base][:config_dir],
+      :inputs => {},
+      :defined_parameters => {},
+      :defined_outputs => {}
+    }
+    CfDeployer::ConfigLoader.any_instance.should_receive(:error_document)
+    expect { loader.send(:cf_template, 'broken_json') }.to raise_error(RuntimeError)
+  end
+
+  it 'should use error_document to show the broken document when parsing broken yaml' do
+    CfDeployer::ConfigLoader.any_instance.should_receive(:error_document)
+    expect { CfDeployer::ConfigLoader.new.send(:load_yaml, @broken_yaml) }.to raise_error
   end
 
   it 'should set default keep-previous-stack to true' do

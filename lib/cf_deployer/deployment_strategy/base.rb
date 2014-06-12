@@ -28,6 +28,21 @@ module CfDeployer
         BLUE_GREEN_STRATEGY
       end
 
+      def run_hook(hook_name)
+        CfDeployer::Driver::DryRun.guard "Skipping hook #{hook_name}" do
+          unless @params_and_outputs_resolved
+            target_stack = ( active_stack || stack )
+            unless target_stack.exists?
+              CfDeployer::Log.info "Skipping hook call for #{hook_name} since stack #{target_stack.name} doesn't exist."
+              return
+            end
+            get_parameters_outputs target_stack
+          end
+          hook = Hook.new hook_name, context[hook_name]
+          hook.run context
+        end
+      end
+
       protected
 
       def stack_prefix
@@ -45,15 +60,9 @@ module CfDeployer
         stack.delete
       end
 
-      def run_hook(hook_name)
-        CfDeployer::Driver::DryRun.guard "Skipping hook #{hook_name}" do
-          hook = Hook.new hook_name, context[hook_name]
-          hook.run context
-        end
-      end
-
       def get_parameters_outputs(stack)
         CfDeployer::Driver::DryRun.guard "Skipping get_parameters_outputs" do
+          @params_and_outputs_resolved = true
           context[:parameters] = stack.parameters
           context[:outputs] = stack.outputs
         end

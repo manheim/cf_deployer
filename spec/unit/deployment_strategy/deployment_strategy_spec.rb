@@ -22,6 +22,7 @@ describe 'Deployment Strategy' do
     expect(CfDeployer::DeploymentStrategy::AutoScalingGroupSwap).to receive(:new)
     CfDeployer::DeploymentStrategy.create('myApp', 'uat', 'db', @context[:components][:db])
   end
+
   it "should create Cname-Swap strategy" do
     expect(CfDeployer::DeploymentStrategy::CnameSwap).to receive(:new)
     CfDeployer::DeploymentStrategy.create('myApp', 'uat', 'web', @context[:components][:web])

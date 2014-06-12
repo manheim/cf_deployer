@@ -50,6 +50,10 @@ module CfDeployer
       statuses
     end
 
+    def run_hook component_name, hook_name
+      @components.detect{ |component| component_name == component.name }.run_hook hook_name
+    end
+
     def destroy
       components = get_targets.sort { |a, b| b <=> a }
       components.each &:destroy

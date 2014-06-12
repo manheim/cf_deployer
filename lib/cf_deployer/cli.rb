@@ -19,6 +19,13 @@ module CfDeployer
       CfDeployer.deploy merged_options
     end
 
+    desc "runhook [ENVIRONMENT] [COMPONENT] [HOOK_NAME]\t", 'Run the specified hook'
+    def runhook environment, component, hook_name
+      @hook_name = hook_name.to_sym
+      prep_for_action :runhook, environment, component
+      CfDeployer.runhook merged_options
+    end
+
     desc "destroy [ENVIRONMENT] [COMPONENT]\t", 'Destroy the specified environment/component'
     def destroy environment, component = nil
       prep_for_action :destroy, environment, component
@@ -73,7 +80,9 @@ module CfDeployer
       end
 
       def merged_options
-        symbolize_all_keys options.merge({:environment => @environment, :component => @component})
+        the_merge_options = {:environment => @environment, :component => @component}
+        the_merge_options[:hook_name] = @hook_name if @hook_name
+        symbolize_all_keys options.merge(the_merge_options)
       end
 
       def set_log_level

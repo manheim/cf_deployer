@@ -54,6 +54,12 @@ module CfDeployer
     Application.new(config).deploy
   end
 
+  def self.runhook opts
+    config = self.parseconfig opts
+    # AWS.config(:logger => Logger.new($stdout))
+    Application.new(config).run_hook opts[:component].first, opts[:hook_name]
+  end
+
   def self.destroy opts
     config = self.parseconfig opts, false
     # AWS.config(:logger => Logger.new($stdout))

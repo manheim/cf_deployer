@@ -139,4 +139,12 @@ describe "component" do
       end
     end
   end
+
+  describe '#run_hook' do
+    it 'should resolve_settings before running the hook' do
+      expect(@web).to receive(:resolve_settings)
+      expect(@strategy).to receive(:run_hook).with(:'after-work')
+      @web.run_hook :'after-work'
+    end
+  end
 end

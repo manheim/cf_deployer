@@ -76,6 +76,11 @@ module CfDeployer
       strategy.status get_resource_statuses
     end
 
+    def run_hook hook_name
+      resolve_settings
+      strategy.run_hook hook_name
+    end
+
     private
 
     def resolve_settings
