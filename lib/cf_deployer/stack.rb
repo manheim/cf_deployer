@@ -19,10 +19,11 @@ module CfDeployer
       config_dir = @context[:config_dir]
       template = CfDeployer::ConfigLoader.component_json(@component, @context)
       capabilities = @context[:capabilities] || []
-      tags = @context[:tags] || []
+      notify = @context[:notify] || []
+      tags = @context[:tags] || {}
       params = to_str(@context[:inputs].select{|key, value| @context[:defined_parameters].keys.include?(key)})
       CfDeployer::Driver::DryRun.guard "Skipping deploy" do
-        exists? ? update_stack(template, params, capabilities, tags) : create_stack(template, params, capabilities, tags)
+        exists? ? update_stack(template, params, capabilities, tags) : create_stack(template, params, capabilities, tags, notify)
       end
     end
 
@@ -106,11 +107,12 @@ module CfDeployer
       wait_for_stack_op_terminate
     end
 
-    def create_stack(template, params, capabilities, tags)
+    def create_stack(template, params, capabilities, tags, notify)
       Log.info "Creating stack #{@stack_name}..."
       @cf_driver.create_stack template,
                               :disable_rollback => true,
                               :capabilities => capabilities,
+                              :notify => notify,
                               :tags => reformat_tags(tags),
                               :parameters => params
       wait_for_stack_op_terminate

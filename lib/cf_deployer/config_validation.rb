@@ -6,7 +6,7 @@ module CfDeployer
 
     CommonInputs = [:application, :environment, :component, :region]
     EnvironmentOptions = [:settings, :inputs, :tags, :components]
-    ComponentOptions = [:settings, :inputs, :tags, :'depends-on', :'deployment-strategy', :'before-destroy', :'after-create', :'after-swap', :'defined_outputs', :'defined_parameters', :config_dir, :capabilities]
+    ComponentOptions = [:settings, :inputs, :tags, :'depends-on', :'deployment-strategy', :'before-destroy', :'after-create', :'after-swap', :'defined_outputs', :'defined_parameters', :config_dir, :capabilities, :notify]
 
     def validate config, validate_inputs = true
       @config = config

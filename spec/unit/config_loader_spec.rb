@@ -69,8 +69,12 @@ application: myApp
 components:
   base:
     deployment-strategy: create-or-update
+    tags:
+      component: base
     inputs:
       foobar: <%= environment %>.IsGreat
+    notify:
+      - arn:base
   api:
     deployment-strategy: auto-scaling-group-swap
     depends-on:
@@ -79,8 +83,10 @@ components:
       require-basic-auth: true
       timeout: 90
       mail-server: http://api.abc.com
+    notify: arn:api
   front-end:
     deployment-strategy: cname-swap
+    notify: arn:base
     depends-on:
       - base
       - api
@@ -97,12 +103,18 @@ inputs:
   mail-server: http://abc.com
   cname: myserver.com
 
+notify: 
+  - arn:root
+
+tags:
+  version: v1.1
 
 environments:
   dev:
     inputs:
       mail-server: http://dev.abc.com
       timeout: 60
+    notify: arn:dev
   production:
     inputs:
       requires-basic-auth: true
@@ -166,6 +178,28 @@ environments:
     config[:components][:base][:config_dir].should eq(config_dir)
     config[:components][:'front-end'][:config_dir].should eq(config_dir)
   end
+
+  it "notify option should be merged to component context" do
+    config =  CfDeployer::ConfigLoader.new.load({:'config-file' => @config_file, :environment => 'dev'})
+    config[:components][:base][:notify].should eq(['arn:root', 'arn:base', 'arn:dev'])
+    config[:components][:api][:notify].should eq(['arn:root', 'arn:api', 'arn:dev'])
+    config[:components][:'front-end'][:notify].should eq(['arn:root', 'arn:base', 'arn:dev'])
+  end
+  
+  it "notify option should be merged to environment context" do
+    config =  CfDeployer::ConfigLoader.new.load({:'config-file' => @config_file, :environment => 'uat'})
+    config[:components][:base][:notify].should eq(['arn:root', 'arn:base'])
+    config[:components][:api][:notify].should eq(['arn:root', 'arn:api'])
+    config[:components][:'front-end'][:notify].should eq(['arn:root', 'arn:base'])
+  end
+
+  it "tags option should be copied to component context" do
+    config =  CfDeployer::ConfigLoader.new.load({:'config-file' => @config_file, :environment => 'uat'})
+    config[:components][:api][:tags].should eq({:version => 'v1.1'})
+    config[:components][:base][:tags].should eq({:version => 'v1.1', :component => 'base'})
+    config[:components][:'front-end'][:tags].should eq({:version => 'v1.1'})
+  end
+
 
   it "component's settings should be merged to common settings" do
     config =  CfDeployer::ConfigLoader.new.load({:'config-file' => @config_file, :environment => 'uat'})

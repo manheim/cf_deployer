@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    cf_deployer (1.2.8)
+    cf_deployer (1.2.9)
       aws-sdk
       log4r
       rainbow
