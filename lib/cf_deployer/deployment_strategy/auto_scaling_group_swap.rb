@@ -71,14 +71,12 @@ module CfDeployer
 
       end
 
-    
       def stack_active?(stack)
         return false unless stack.exists?
         get_active_asg(stack).any?
       end
 
 
-      
       def get_active_asg stack
         return [] unless stack && stack.exists?
         group_ids(stack).select do |id|

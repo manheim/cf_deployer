@@ -50,7 +50,7 @@ in the examples below
 
 For Blue/Green deployments keep-previous-stack is defaulted to true.
 This means that after a deployment, the previous deployed stack will be kept.
-For non-production environment, you may set it to false to delete the previous stack 
+For non-production environment, you may set it to false to delete the previous stack
 after a deployment for saving cost.
 
 If the CloudFormation template has the output named 'AutoScalingGroupName'
@@ -78,22 +78,56 @@ There are 3 strategies for deploying with cf_deployer:
 Used by the gem for blue/green deployments and naming conventions
 
   * **For all deploys - These are the settings you can use**
-    * application
-    * component
-    * environment
     * dns-driver (defaults to CfDeployer::Driver::Route53)
     * keep-previous-stack (True/False: for Cname-Swap and Auto Scaling Group Swap, previous stack will be kept after new stack is created by default. Set it to false to delete the previous stack)
     * raise-error-for-unused-inputs (True/False: it is false by default. If it is set to true, errors will be thrown if there are any inputs which are not used as parameters of CloudFormation json templates. If it is set to false or the setting does not exist, warnings will be printed in the console if there are un-used inputs.)
-    * auto-scaling-group-swap-name-output
+    * auto-scaling-group-name-output
   * **For Components Using the Cname-Swap Deployment Strategy**
-    * dns-fqdn
-    * dns-zone
+    * dns-fqdn (DNS record set name, for example, myApp.api.abc.com)
+    * dns-zone (DNS hosted zone, for example, api.abc.com)
     * elb-name-output
 
 ##### Inputs:
 Used by CloudFormation in the JSON template (Note: Settings can be used as inputs, but inputs are not used as settings).  These can be almost anything.  They are defined in the **Parameters** block in the CF template.
 
 
+
+=================
+### Tagging Your Stacks
+
+You can use tags option to tag your application. The root level tags will be applied to all the components.
+The component level tags will be only applied to that component. When a component with tags is deploying, the co-responding cloud-formation stack and auto-scaling groups and ec2 instances within the stack will be tagged with the tags of the component.
+
+```
+tags:
+  project: my-project
+  environment: <%= environment %>
+  ownerEmail: awesome@domain.com
+components:
+  web:
+    capabilities:
+      - CAPABILITY_IAM
+    tags:
+      component: web
+
+```
+
+=================
+### Get notification of events of cloud-formation stacks
+
+You can create ASW SNS topics and set the notify option to the ARNs of the topics to get notification of thevents of cloud-formation stacks.
+The notify option can be set to a string or an array of strings.
+
+```
+notify: arn:foo:boo:mytopic
+components:
+  web:
+    notify: arn:web:topic
+environments:
+  prod:
+    notify: arn:only-prod:topic
+
+```
 ==================
 ### How Termination Works
 
@@ -114,22 +148,6 @@ Components may be deleted several different ways:
   * For asg_swap this is the stack that has an autoscaling group with 0
     instances
 
-
-=================
-### Tagging Your Stacks
-
-Tags for cf_deployer:application, cf_deployer:environment, and cf_deployer:component are automatically added to the CF stack by cf_deployer. To add your own tags:
-
-```
-components:
-  web:
-    capabilities:
-      - CAPABILITY_IAM
-    tags:
-      Team:  Team Awesome
-      OwnerEmail: awesome@domain.com
-
-```
 
 ==============
 ### Hooks
