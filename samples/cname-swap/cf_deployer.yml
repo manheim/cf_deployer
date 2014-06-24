@@ -1,0 +1,25 @@
+#To make this sample work you need to create a keypair in Amazon, then fill it in here
+<%
+keypair_name = 'fill me in'
+%>
+<%
+#You will need to have a hosted zone created in route53 in Amazon to use this.  Fill it in here:
+dns_zone = 'zhao.com'
+dns_fqdn = 'test1.zhao.com'
+%>
+# The name of your application
+application: cf-deployer-sample-cname-swap
+components:
+  web:
+    deployment-strategy: cname-swap
+    settings:
+      dns-zone: <%= dns_zone %>
+      dns-fqdn: <%= dns_fqdn %>
+    inputs:
+      KeyName: <%= keypair_name %>
+inputs:
+  SSHLocation: 0.0.0.0/0
+environments:
+  dev:
+    inputs:
+      InstanceType: t1.micro

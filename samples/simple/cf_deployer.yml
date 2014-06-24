@@ -1,0 +1,28 @@
+#To make this sample work you need to create a keypair in Amazon, then fill it in here
+<%
+keypair_name = 'fill me in'
+%>
+application: cf-deployer-sample-asg-swap
+components:
+  base:
+    inputs:
+      WebServerPort: 8000
+  web:
+    depends-on:
+      - base
+    deployment-strategy: auto-scaling-group-swap
+    before-destroy: File.open('tmp/before-destroy.log', 'w') { |f| f.write "#{context[:outputs]}" }
+    after-create:
+      file: after_create_hook.rb
+      timeout: 30
+    after-swap:
+      code: File.open('tmp/after-swap.log', 'w') {|f| f.write "#{context}" }
+      timeout: 100
+    inputs:
+      KeyName: <%= keypair_name %>
+      ElasticLoadBalancer:
+        component: base
+        output-key: ELBName
+      WebServerPort: 8000
+    settings:
+      keep-previous-stack: false

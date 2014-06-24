@@ -1,0 +1,42 @@
+{
+  "AWSTemplateFormatVersion" : "2010-09-09",
+
+  "Description" : "Sample Template",
+
+  "Parameters": {
+    "WebServerPort": {
+      "Description": "TCP/IP port of the web server",
+      "Type": "String",
+      "Default": "8000"
+    }
+  },
+  "Resources" : {
+    "ElasticLoadBalancer": {
+      "Type": "AWS::ElasticLoadBalancing::LoadBalancer",
+      "Properties": {
+        "AvailabilityZones": { "Fn::GetAZs": "" },
+        "Listeners": [ {
+          "LoadBalancerPort": "80",
+          "InstancePort": {
+            "Ref": "WebServerPort"
+          },
+          "Protocol": "HTTP"
+        }],
+        "HealthCheck" : {
+          "Target" : { "Fn::Join" : [ "", ["HTTP:", { "Ref" : "WebServerPort" }, "/"]]},
+          "HealthyThreshold" : "3",
+          "UnhealthyThreshold" : "5",
+          "Interval" : "30",
+          "Timeout" : "5"
+        }
+      }
+    }
+  },
+
+  "Outputs" : {
+    "ELBName" : {
+      "Description" : "Name of ELB",
+      "Value" : { "Ref" : "ElasticLoadBalancer" }
+    }
+  }
+}

@@ -1,0 +1,10 @@
+#!/usr/bin/env ruby
+
+require_relative '../lib/cf_deployer'
+
+begin
+ CfDeployer::CLI.start(ARGV)
+rescue CfDeployer::ApplicationError => e
+  puts "Error: #{e.message}"
+  exit(1)
+end

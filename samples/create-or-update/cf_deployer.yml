@@ -1,0 +1,17 @@
+# The sample config file for create-or-update deployment strategy
+# The given auto-scaling group will be warmed up after the cloud-formation stack is created.
+#To make this sample work you need to create a keypair in Amazon, then fill it in here
+<%
+keypair_name = 'fill me in'
+%>
+application: cf-deployer-sample-create-or-update
+components:
+  web:
+    deployment-strategy: create-or-update
+    inputs:
+      SSHLocation: 10.0.0.255/32
+      InstanceType: t1.micro
+      KeyName: <%= keypair_name %>
+    settings:
+      auto-scaling-group-name-output:
+        - AutoScalingGroupID

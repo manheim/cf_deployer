@@ -1,0 +1,121 @@
+{
+  "AWSTemplateFormatVersion" : "2010-09-09",
+
+  "Description" : "A sample to show deployment using the CF Deployer Gem",
+  "Parameters": {
+    "InstanceType": {
+      "Description": "WebServer EC2 instance type",
+      "Type": "String",
+      "Default": "t1.micro"
+    },
+    "WebServerPort": {
+      "Description": "TCP/IP port of the web server",
+      "Type": "String",
+      "Default": "8888"
+    },
+    "KeyName": {
+      "Description": "Name of an existing EC2 KeyPair to enable SSH access to the instances",
+      "Type": "String"
+    },
+    "ElasticLoadBalancer": {
+      "Description": "Name of existing ELB",
+      "Type": "String"
+    }
+  },
+  "Mappings"  : {
+    "Regions" : {
+        "us-east-1"      :  { "ami" : "ami-81a768e8" },
+        "us-west-1"      :  { "ami" : "ami-b18ed2f4" },
+        "us-west-2"      :  { "ami" : "ami-feff72ce" },
+        "eu-west-1"      :  { "ami" : "ami-998bb9ed" },
+        "sa-east-1"      :  { "ami" : "ami-a239e6bf" },
+        "ap-southeast-1" :  { "ami" : "ami-5e5a200c" },
+        "ap-southeast-2" :  { "ami" : "ami-bd990e87" },
+        "ap-northeast-1" :  { "ami" : "ami-7671c577" }
+      }
+  },
+  "Resources" : {
+    "WebServerGroup": {
+      "Type": "AWS::AutoScaling::AutoScalingGroup",
+
+      "UpdatePolicy" : {
+        "AutoScalingRollingUpdate" : {
+          "MaxBatchSize" : "2",
+          "MinInstancesInService" : "2",
+          "PauseTime" : "PT0M30S"
+        }
+      },
+
+      "Properties": {
+        "AvailabilityZones": {
+          "Fn::GetAZs": ""
+        },
+        "LaunchConfigurationName": {
+          "Ref": "LaunchConfig"
+        },
+        "MinSize": "1",
+        "HealthCheckType" : "ELB",
+        "MaxSize": "2",
+        "DesiredCapacity" : "1",
+        "LoadBalancerNames": [
+          {
+          "Ref": "ElasticLoadBalancer"
+        }
+        ]
+      }
+    },
+    "LaunchConfig": {
+      "Type": "AWS::AutoScaling::LaunchConfiguration",
+      "Properties": {
+        "KeyName": {
+          "Ref": "KeyName"
+        },
+        "ImageId" : { "Fn::FindInMap" : [ "Regions", { "Ref" : "AWS::Region" }, "ami"] },
+        "UserData": {
+          "Fn::Base64": {
+            "Ref": "WebServerPort"
+          }
+        },
+        "SecurityGroups": [
+          {
+          "Ref": "InstanceSecurityGroup"
+        }
+        ],
+        "InstanceType": {
+          "Ref": "InstanceType"
+        }
+      }
+    },
+    "InstanceSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "Enable SSH access and HTTP access on the configured port",
+        "SecurityGroupIngress": [
+          {
+          "IpProtocol": "tcp",
+          "FromPort": "22",
+          "ToPort": "22",
+          "CidrIp": "0.0.0.0/0"
+        },
+        {
+          "IpProtocol": "tcp",
+          "FromPort": {
+            "Ref": "WebServerPort"
+          },
+          "ToPort": {
+            "Ref": "WebServerPort"
+          },
+          "CidrIp": "0.0.0.0/0"
+        }
+        ]
+      }
+    }
+
+  },
+  "Outputs" : {
+    "AutoScalingGroupName" : {
+      "Description" : "Name of the autoscaling group to swap on",
+      "Value" : { "Ref" : "WebServerGroup" } 
+    }
+  }
+}
