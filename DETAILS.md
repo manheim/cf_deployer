@@ -115,7 +115,7 @@ components:
 =================
 ### Get notification of events of cloud-formation stacks
 
-You can create ASW SNS topics and set the notify option to the ARNs of the topics to get notification of thevents of cloud-formation stacks.
+You can create ASW SNS topics and set the notify option to the ARNs of the topics to get notification of the events of cloud-formation stacks.
 The notify option can be set to a string or an array of strings.
 
 ```
