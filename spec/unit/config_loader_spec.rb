@@ -2,6 +2,7 @@ require 'spec_helper'
 describe "load config settings" do
 
   before :each do
+    Dir.mkdir 'tmp' unless Dir.exists?('tmp')
     @config_file = File.expand_path("../../../tmp/test_config.yml", __FILE__)
     @base_json = File.expand_path("../../../tmp/base.json", __FILE__)
     @api_json = File.expand_path("../../../tmp/api.json", __FILE__)
