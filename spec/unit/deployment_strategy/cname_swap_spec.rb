@@ -64,6 +64,7 @@ describe CfDeployer::DeploymentStrategy::CnameSwap do
       allow(before_destroy_hook).to receive(:run) do |arg|
         @log += "#{arg[:parameters][:name]} deleted."
       end
+      expect(dns_driver).to receive(:delete_record_set).with('foobar.com', 'test.foobar.com')
       cname_swap.destroy
       @log.should eq('green deleted.blue deleted.')
     end
@@ -208,6 +209,7 @@ describe CfDeployer::DeploymentStrategy::CnameSwap do
       cname_swap = CfDeployer::DeploymentStrategy.create('myapp', 'dev', 'web', @context)
       expect(blue_stack).to receive(:delete)
       expect(green_stack).to receive(:delete)
+      expect(dns_driver).to receive(:delete_record_set).with('foobar.com', 'test.foobar.com')
       cname_swap.destroy
     end
   end

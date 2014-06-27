@@ -28,6 +28,10 @@ module CfDeployer
         Log.info "#{component_name} switched successfully"
       end
 
+      def destroy_post
+        dns_driver.delete_record_set(dns_zone, dns_fqdn) 
+      end
+
       private
 
 
