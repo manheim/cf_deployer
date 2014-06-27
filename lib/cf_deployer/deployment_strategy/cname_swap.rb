@@ -7,6 +7,7 @@ module CfDeployer
         delete_stack inactive_stack
         create_inactive_stack
         warm_up_inactive_stack
+        run_hook(:'after-create')
         swap_cname
         Kernel.sleep 60
         run_hook(:'after-swap')
@@ -44,7 +45,6 @@ module CfDeployer
       def create_inactive_stack
         inactive_stack.deploy
         get_parameters_outputs(inactive_stack)
-        run_hook(:'after-create')
       end
 
       def swap_cname
