@@ -13,6 +13,7 @@ describe "Config Validation" do
         :base => {
           :inputs => {:time_out => 30, :mail_server =>'abc'},
           :defined_outputs => {:VPCID => {}},
+          :notify => [ 'arn1', 'arn2'],
           :defined_parameters => {:mail_server => {}, :time_out => {}}
         },
         :web => {
@@ -20,6 +21,7 @@ describe "Config Validation" do
           :config_dir => 'samples/simple',
           :'before-destroy'=> "puts 'destroying'",
           :capabilities => ['CAPABILITIES_IAM'],
+          :notify => 'arn1',
           :'after-create' => {
             :file => "after_create_hook.rb",
             :timeout => 30

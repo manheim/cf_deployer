@@ -3,8 +3,14 @@
 keypair_name = 'fill me in'
 %>
 application: cf-deployer-sample-asg-swap
+tags:
+  project: cfd-sample-asg-swap
+  environment: <%= environment %>
+  ownerEmail: bar@foo.com
 components:
   base:
+    tags:
+      component: base
     inputs:
       WebServerPort: 8000
   web:
@@ -18,6 +24,8 @@ components:
     after-swap:
       code: File.open('tmp/after-swap.log', 'w') {|f| f.write "#{context}" }
       timeout: 100
+    tags:
+      component: web
     inputs:
       KeyName: <%= keypair_name %>
       ElasticLoadBalancer:

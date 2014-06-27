@@ -16,11 +16,13 @@ module CfDeployer
       @config[:settings] ||= {}
       @config[:environments] ||= {}
       @config[:tags] ||= {}
+      @config[:notify] ||= []
       get_targets
       copy_config_dir
-      merge_section(:settings)
-      merge_section(:inputs)
-      merge_section(:tags)
+      merge_hash(:settings)
+      merge_hash(:inputs)
+      merge_hash(:tags)
+      merge_array(:notify)
       copy_region_app_env_component
       get_cf_template_keys('Parameters')
       get_cf_template_keys('Outputs')
@@ -37,8 +39,25 @@ module CfDeployer
       raise ApplicationError.new("The config file is not a valid yaml file")
     end
 
+    def merge_array(section)
+      root_value = to_array(@config[section])
+      environment_name = @config[:environment] || ''
+      environment = @config[:environments][environment_name.to_sym] || {}
+      environment_value = to_array(environment[section])
+      @config[:components].each do |component_name, component|
+        component_value = to_array(component[section])
+        component[section] = root_value + component_value + environment_value
+        component[section].uniq!
+      end
+    end
 
-    def merge_section(section)
+    def to_array(value)
+      return value if value.is_a?(Array)
+      return [] unless value
+      [value]
+    end
+
+    def merge_hash(section)
       merge_component_options section
       merge_environment_options(@config[:environment], section)
       merge_environment_variables section

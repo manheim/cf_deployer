@@ -14,3 +14,9 @@ version 1.2.7
 
 version 1.2.8
   - Removed configure option validion at root level. Now users can have their own options at the root level in cf_deployer.yml file.
+
+version 1.2.9
+  - Support notify option in cf_deployer.yml, which can be set to ARNs of AWS topics to get notification of events of cloud-formation stacks.
+
+version 1.2.10
+  - update DETAILS.md

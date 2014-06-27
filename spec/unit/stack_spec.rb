@@ -8,14 +8,24 @@ describe CfDeployer::Stack do
 
   context '#deploy' do
     it 'should call CfDeployer::ConfigLoader.component_json to get the JSON for the stack' do
-      config = { :inputs => { :foo => 'foo' },
-                 :defined_parameters => { :bar => 'bar' },
+      config = { :inputs => { :foo => :bar, :goo => :hoo },
+                 :tags => { :app => 'app1', :env => 'dev'},
+                 :defined_parameters => { :foo => 'bar' },
+                 :notify => ['topic1_arn', 'topic2_arn'],
                  :cf_driver => @cf_driver }
-      CfDeployer::ConfigLoader.should_receive(:component_json).with('web', config)
+      template = { :resourses => {}}
+      allow(CfDeployer::ConfigLoader).to receive(:component_json).with('web', config).and_return(template)
       allow(@cf_driver).to receive(:stack_exists?) { false }
       allow(@cf_driver).to receive(:stack_status) { :create_complete }
+      expected_opt = { :disable_rollback => true,
+        :capabilities => [],
+        :notify => ['topic1_arn', 'topic2_arn'],
+        :tags => [{'Key' => 'app', 'Value' => 'app1'},
+                  {'Key' => 'env', 'Value' => 'dev'}],
+        :parameters => {:foo => 'bar'}
+      }
+      expect(@cf_driver).to receive(:create_stack).with(template, expected_opt)
       stack = CfDeployer::Stack.new('test','web', config)
-      allow(stack).to receive(:create_stack)
       stack.deploy
     end
   end
