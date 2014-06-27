@@ -19,4 +19,7 @@ version 1.2.9
   - Support notify option in cf_deployer.yml, which can be set to ARNs of AWS topics to get notification of events of cloud-formation stacks.
 
 version 1.2.10
-  - update DETAILS.md
+  - Update DETAILS.md
+
+version 1.2.11
+  - Remove record set in R53 when stacks are deployed 
