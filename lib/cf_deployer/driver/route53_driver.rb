@@ -5,22 +5,20 @@ module CfDeployer
         @aws_route53 = aws_route53 || AWS::Route53.new
       end
 
-      def find_alias_target(target_zone_name, target_host_name)
-        target_zone = @aws_route53.hosted_zones.find { |z| z.name == trailing_dot(target_zone_name.downcase) }
-        raise ApplicationError.new('Target zone not found!') if target_zone.nil?
-
-        target_host = target_zone.resource_record_sets.find { |r| r.name == trailing_dot(target_host_name.downcase) }
-        return nil if target_host.nil? || target_host.alias_target.nil?
-
-        remove_trailing_dot(target_host.alias_target[:dns_name])
+      def find_alias_target(hosted_zone_name, target_host_name)
+        hosted_zone = get_hosted_zone(hosted_zone_name)
+        raise ApplicationError.new('Target zone not found!') if hosted_zone.nil?
+        record_set = get_record_set(hosted_zone, target_host_name)
+        return nil if record_set.nil? || record_set.alias_target.nil?
+        remove_trailing_dot(record_set.alias_target[:dns_name])
       end
 
-      def set_alias_target(target_zone_name, target_host_name, elb_hosted_zone_id, elb_dnsname)
-        Log.info "set alias target --Hosted Zone: #{target_zone_name} --Host Name: #{target_host_name} --ELB DNS Name: #{elb_dnsname} --ELB Zone ID: #{elb_hosted_zone_id}"
-        target_zone_name = trailing_dot(target_zone_name)
+      def set_alias_target(hosted_zone_name, target_host_name, elb_hosted_zone_id, elb_dnsname)
+        Log.info "set alias target --Hosted Zone: #{hosted_zone_name} --Host Name: #{target_host_name} --ELB DNS Name: #{elb_dnsname} --ELB Zone ID: #{elb_hosted_zone_id}"
+        hosted_zone_name = trailing_dot(hosted_zone_name)
         target_host_name = trailing_dot(target_host_name)
-        target_zone = @aws_route53.hosted_zones.find { |z| z.name == target_zone_name }
-        raise ApplicationError.new('Target zone not found!') if target_zone.nil?
+        hosted_zone = @aws_route53.hosted_zones.find { |z| z.name == hosted_zone_name }
+        raise ApplicationError.new('Target zone not found!') if hosted_zone.nil?
 
         change = {
           action: "UPSERT",
@@ -36,7 +34,7 @@ module CfDeployer
         }
 
         batch = {
-          hosted_zone_id: target_zone.path,
+          hosted_zone_id: hosted_zone.path,
           change_batch: {
             changes: [change]
           }
@@ -47,6 +45,14 @@ module CfDeployer
         end
       end
 
+      def delete_record_set(hosted_zone_name, target_host_name)
+        hosted_zone = get_hosted_zone(hosted_zone_name)
+        return unless hosted_zone
+        record_set = get_record_set(hosted_zone, target_host_name)
+        CfDeployer::Driver::DryRun.guard "Skipping Route53 DNS delete" do
+          record_set.delete if record_set
+        end
+      end
       private
 
       def change_resource_record_sets_with_retry(batch)
@@ -63,6 +69,14 @@ module CfDeployer
         end
 
         raise ApplicationError.new('Failed to update Route53 alias target record!')
+      end
+
+      def get_hosted_zone(zone_name)
+        @aws_route53.hosted_zones.find { |z| z.name == trailing_dot(zone_name.downcase) }
+      end
+      
+      def get_record_set(hosted_zone, target_host_name)
+       hosted_zone.resource_record_sets.find { |r| r.name == trailing_dot(target_host_name.downcase) }
       end
 
       def trailing_dot(text)

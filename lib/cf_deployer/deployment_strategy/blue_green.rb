@@ -9,8 +9,12 @@ module CfDeployer
       def destroy
         delete_stack green_stack
         delete_stack blue_stack
+        destroy_post
       end
 
+      def destroy_post
+        #overwrite in sub class
+      end
 
       def output_value(key)
         active_stack ? active_stack.output(key) : "The value will be referenced from the output #{key} of undeployed component #{component_name}"
