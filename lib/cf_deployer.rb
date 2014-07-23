@@ -87,9 +87,8 @@ module CfDeployer
 
   def self.parseconfig options, validate_inputs = true
     AWS.config(:region => options[:region]) if options[:region]
-    split_settings = options.dup
-    split_settings.merge!({:cli_overrides => {:settings => split_settings.delete(:settings), :inputs => split_settings.delete(:inputs)} })
-    config = ConfigLoader.new.load split_settings
+    options[:cli_overrides] = {:settings => options.delete(:settings), :inputs => options.delete(:inputs)}
+    config = ConfigLoader.new.load options
     ConfigValidation.new.validate config, validate_inputs
     config
   end
