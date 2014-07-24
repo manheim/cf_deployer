@@ -1,7 +1,4 @@
 #To make this sample work you need to create a keypair in Amazon, then fill it in here
-<%
-keypair_name = 'fill me in'
-%>
 application: cf-deployer-sample-multi-asg-swap
 components:
   web:
@@ -10,7 +7,5 @@ components:
       auto-scaling-group-name-output:
         - AutoScalingGroupName1
         - AutoScalingGroupName2
-    inputs:
-       KeyName: <%= keypair_name %>
 inputs:
   SSHLocation: 10.0.0.255/32
