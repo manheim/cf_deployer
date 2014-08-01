@@ -15,6 +15,7 @@ GEM
       nokogiri (>= 1.4.4)
     coderay (1.1.0)
     diff-lcs (1.2.5)
+    diffy (3.0.6)
     json (1.8.1)
     log4r (1.1.10)
     method_source (0.8.2)
@@ -44,6 +45,7 @@ PLATFORMS
 
 DEPENDENCIES
   cf_deployer!
+  diffy
   pry
   rainbow
   rake

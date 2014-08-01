@@ -71,6 +71,11 @@ module CfDeployer
     Application.new(config).json
   end
 
+  def self.diff opts
+    config = self.parseconfig opts, false
+    Application.new(config).diff
+  end
+
   def self.status opts
     config = self.parseconfig opts, false
     status_info = Application.new(config).status opts[:component].first, opts[:verbosity]

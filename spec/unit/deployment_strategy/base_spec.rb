@@ -42,6 +42,45 @@ describe 'Base Deployment Strategy' do
     end
   end
 
+  describe '#active_template' do
+    before :each do
+      @context = {
+        application: 'myApp',
+        environment: 'uat',
+        components:
+        { base: {:'deployment-strategy' => 'create-or-update'},
+          db:  {:'deployment-strategy' => 'auto-scaling-group-swap'},
+          web: { :'deployment-strategy' => 'cname-swap' }
+          }
+        }
+    end
+
+    it "should return nil if there is no active stack" do
+      the_stack = double()
+      the_stack.should_receive(:exists?).and_return(false)
+      the_stack.should_not_receive(:template)
+
+      strategy = CfDeployer::DeploymentStrategy.create('myApp', 'uat', 'web', @context[:components][:web])
+      strategy.should_receive(:active_stack).and_return(the_stack)
+      # strategy.should_not_receive(:get_parameters_outputs)
+
+      expect( strategy.active_template ).to eq(nil)
+    end
+
+    it "should return the JSON template of the active stack, if there is one" do
+      the_template = double
+
+      the_stack = double
+      the_stack.should_receive(:exists?).and_return(true)
+      the_stack.should_receive(:template).and_return(the_template)
+
+      strategy = CfDeployer::DeploymentStrategy.create('myApp', 'uat', 'web', @context[:components][:web])
+      strategy.should_receive(:active_stack).and_return(the_stack)
+
+      expect( strategy.active_template ).to eq(the_template)
+    end
+  end
+
   describe '#run_hook' do
     before :each do
       @context = {

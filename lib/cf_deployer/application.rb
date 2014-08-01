@@ -42,6 +42,11 @@ module CfDeployer
       components.each &:json
     end
 
+    def diff
+      components = get_targets().sort
+      components.each &:diff
+    end
+
     def status component_name, verbosity
       statuses = {}
       @components.select { |component|  component_name.nil? || component_name == component.name }.each do |component|

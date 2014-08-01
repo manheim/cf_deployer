@@ -1,3 +1,5 @@
+require 'diffy'
+
 module CfDeployer
   class Component
     attr_reader :name, :dependencies, :children
@@ -34,6 +36,19 @@ module CfDeployer
       resolve_settings
       puts "#{name} json template:"
       puts ConfigLoader.component_json(name, @context)
+    end
+
+    def diff
+      resolve_settings
+      current_json = strategy.active_template
+      if current_json
+        puts "#{name} json template diff:"
+        new_json = ConfigLoader.component_json(name, @context)
+        Diffy::Diff.default_format = :color
+        puts Diffy::Diff.new( current_json, new_json )
+      else
+        puts "No current json for component #{name}"
+      end
     end
 
     def destroy

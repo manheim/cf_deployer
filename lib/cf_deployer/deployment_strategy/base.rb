@@ -43,6 +43,11 @@ module CfDeployer
         end
       end
 
+      def active_template
+        target_stack = ( active_stack || stack )
+        (target_stack && target_stack.exists?) ? target_stack.template : nil
+      end
+
       protected
 
       def stack_prefix

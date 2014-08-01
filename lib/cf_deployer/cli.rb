@@ -38,6 +38,12 @@ module CfDeployer
       CfDeployer.config merged_options
     end
 
+    desc "diff [ENVIRONMENT] [COMPONENT]", 'Show a diff between the template of the active stack and the parsed CloudFormation JSON for the target component'
+    def diff environment, component = nil
+      prep_for_action :diff, environment, component
+      CfDeployer.diff merged_options
+    end
+
     desc "json [ENVIRONMENT] [COMPONENT]", 'Show parsed CloudFormation JSON for the target component'
     def json environment, component = nil
       prep_for_action :json, environment, component

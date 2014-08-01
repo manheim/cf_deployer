@@ -4,6 +4,7 @@ module CfDeployer
     def self.component_json component, config
       json_file = File.join(config[:config_dir], "#{component}.json")
       raise ApplicationError.new("#{json_file} is missing") unless File.exists?(json_file)
+      CfDeployer::Log.info "ERBing JSON for #{component}"
       ERB.new(File.read(json_file)).result(binding)
     rescue RuntimeError,TypeError,NoMethodError => e
       self.new.send :error_document, File.read(json_file)
@@ -131,6 +132,7 @@ module CfDeployer
       end
 
       json_content = self.class.component_json component.to_s, config
+      CfDeployer::Log.info "Parsing JSON for #{component}"
       begin
         JSON.load json_content
       rescue JSON::ParserError => e
