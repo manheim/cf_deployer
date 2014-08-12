@@ -17,10 +17,11 @@ module CfDeployer
 
 
       def deploy
+        hook_to_run = stack.exists? ? :'after-update' : :'after-create'
         stack.deploy
         warm_up_inactive_stack
         get_parameters_outputs(inactive_stack)
-        run_hook(:'after-create')
+        run_hook(hook_to_run)
       end
 
       def output_value(key)
