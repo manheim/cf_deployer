@@ -9,7 +9,7 @@ describe "load config settings" do
     @front_end_json = File.expand_path("../../../tmp/front-end.json", __FILE__)
     @very_simple_json = File.expand_path("../../../tmp/very-simple.json", __FILE__)
     @json_with_erb = File.expand_path("../../../tmp/json-with-erb.json", __FILE__)
-    @broken_json = File.expand_path("../../../tmp/broken-json.json", __FILE__)
+    @broken_json = File.expand_path("../../../tmp/broken_json.json", __FILE__)
     @broken_erb = File.expand_path("../../../tmp/broken_erb.json", __FILE__)
 
     base_json = <<-eos
@@ -348,7 +348,7 @@ environments:
       :defined_outputs => {}
     }
     CfDeployer::ConfigLoader.any_instance.should_receive(:error_document)
-    expect { loader.send(:cf_template, 'broken_json') }.to raise_error(RuntimeError)
+    expect { loader.send(:cf_template, 'broken_json') }.to raise_error
   end
 
   it 'should use error_document to show the broken document when parsing broken yaml' do
