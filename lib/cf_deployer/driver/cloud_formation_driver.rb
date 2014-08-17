@@ -69,6 +69,10 @@ module CfDeployer
         resources
       end
 
+      def template
+        aws_stack.template
+      end
+
       private
 
       def cloud_formation

@@ -3,8 +3,10 @@ require 'spec_helper'
 describe 'CreateOrUpdate Strategy' do
   before :each do
     @after_create_hook = double('after_create_hook')
+    @after_update_hook = double('after_update_hook')
     @before_destroy_hook = double('before_destroy_hook')
     allow(CfDeployer::Hook).to receive(:new).with(:'after-create', 'after-create'){ @after_create_hook }
+    allow(CfDeployer::Hook).to receive(:new).with(:'after-update', 'after-update'){ @after_update_hook }
     allow(CfDeployer::Hook).to receive(:new).with(:'before-destroy', 'before-destroy') { @before_destroy_hook }
     @context = {
       :application => 'myApp',
@@ -14,6 +16,7 @@ describe 'CreateOrUpdate Strategy' do
           :settings => {},
           :'deployment-strategy' => 'create-or-update',
           :'after-create' => 'after-create',
+          :'after-update' => 'after-update',
           :'before-destroy' => 'before-destroy'
         }
       }
@@ -25,16 +28,28 @@ describe 'CreateOrUpdate Strategy' do
     allow(@stack).to receive(:outputs){ {'ELBName' => 'myelb'}}
   end
 
-  it 'should deploy stack' do
+  it 'should deploy stack and run the after-create hook if no stack exists' do
     hook_context = nil
     expect(@after_create_hook).to receive(:run) do |given_context|
       hook_context = given_context
     end
+    @stack.should_receive(:exists?).and_return(false)
     expect(@stack).to receive(:deploy)
     @create_or_update.deploy
     expect(hook_context[:parameters]).to eq( {'vpc' => 'myvpc'} )
     expect(hook_context[:outputs]).to eq( {'ELBName' => 'myelb'} )
-    
+  end
+
+  it 'should deploy stack and run the after-update hook if a stack already exists' do
+    hook_context = nil
+    expect(@after_update_hook).to receive(:run) do |given_context|
+      hook_context = given_context
+    end
+    @stack.should_receive(:exists?).and_return(true)
+    expect(@stack).to receive(:deploy)
+    @create_or_update.deploy
+    expect(hook_context[:parameters]).to eq( {'vpc' => 'myvpc'} )
+    expect(hook_context[:outputs]).to eq( {'ELBName' => 'myelb'} )
   end
 
   context 'warm up auto scaling group' do
@@ -45,6 +60,7 @@ describe 'CreateOrUpdate Strategy' do
       context = @context[:components][:base]
       context[:settings] = {}
       context[:settings][:'auto-scaling-group-name-output'] = ['AutoScalingGroupID']
+      @stack.should_receive(:exists?).and_return(false)
       allow(@stack).to receive(:output).with('AutoScalingGroupID') { 'asg_name' }
       allow(CfDeployer::Driver::AutoScalingGroup).to receive(:new).with('asg_name') { asg_driver }
       allow(asg_driver).to receive(:describe) { {desired:2, min:1, max:3} }

@@ -41,4 +41,97 @@ describe 'Base Deployment Strategy' do
       }.to raise_error(CfDeployer::ApplicationError)
     end
   end
+
+  describe '#active_template' do
+    before :each do
+      @context = {
+        application: 'myApp',
+        environment: 'uat',
+        components:
+        { base: {:'deployment-strategy' => 'create-or-update'},
+          db:  {:'deployment-strategy' => 'auto-scaling-group-swap'},
+          web: { :'deployment-strategy' => 'cname-swap' }
+          }
+        }
+    end
+
+    it "should return nil if there is no active stack" do
+      the_stack = double()
+      the_stack.should_receive(:exists?).and_return(false)
+      the_stack.should_not_receive(:template)
+
+      strategy = CfDeployer::DeploymentStrategy.create('myApp', 'uat', 'web', @context[:components][:web])
+      strategy.should_receive(:active_stack).and_return(the_stack)
+      # strategy.should_not_receive(:get_parameters_outputs)
+
+      expect( strategy.active_template ).to eq(nil)
+    end
+
+    it "should return the JSON template of the active stack, if there is one" do
+      the_template = double
+
+      the_stack = double
+      the_stack.should_receive(:exists?).and_return(true)
+      the_stack.should_receive(:template).and_return(the_template)
+
+      strategy = CfDeployer::DeploymentStrategy.create('myApp', 'uat', 'web', @context[:components][:web])
+      strategy.should_receive(:active_stack).and_return(the_stack)
+
+      expect( strategy.active_template ).to eq(the_template)
+    end
+  end
+
+  describe '#run_hook' do
+    before :each do
+      @context = {
+        application: 'myApp',
+        environment: 'uat',
+        components:
+        { base: {:'deployment-strategy' => 'create-or-update'},
+          db:  {:'deployment-strategy' => 'auto-scaling-group-swap'},
+          web: { :'deployment-strategy' => 'cname-swap' }
+          }
+        }
+    end
+
+    it "should run the specified hook" do
+      hook = double()
+      CfDeployer::Hook.should_receive(:new).and_return(hook)
+      hook.should_receive(:run)
+
+      strategy = CfDeployer::DeploymentStrategy.create('myApp', 'uat', 'web', @context[:components][:web])
+      strategy.instance_variable_set('@params_and_outputs_resolved', true)
+      strategy.run_hook(:some_hook)
+    end
+
+    it "should not try to resolve parameters and outputs they're already initialized" do
+      strategy = CfDeployer::DeploymentStrategy.create('myApp', 'uat', 'web', @context[:components][:web])
+      strategy.instance_variable_set('@params_and_outputs_resolved', true)
+      strategy.should_not_receive(:get_parameters_outputs)
+      strategy.run_hook(:some_hook)
+    end
+
+    it "should not try to resolve parameters and outputs if there's no running stack" do
+      the_stack = double()
+      the_stack.should_receive(:exists?).and_return(false)
+      the_stack.should_receive(:name).and_return("thestack")
+
+      strategy = CfDeployer::DeploymentStrategy.create('myApp', 'uat', 'web', @context[:components][:web])
+      strategy.should_receive(:active_stack).and_return(the_stack)
+      strategy.should_not_receive(:get_parameters_outputs)
+      strategy.run_hook(:some_hook)
+    end
+
+    it "should not try to run a hook if there's no running stack" do
+      CfDeployer::Hook.should_not_receive(:new)
+
+      the_stack = double()
+      the_stack.should_receive(:exists?).and_return(false)
+      the_stack.should_receive(:name).and_return("thestack")
+
+      strategy = CfDeployer::DeploymentStrategy.create('myApp', 'uat', 'web', @context[:components][:web])
+      strategy.should_receive(:active_stack).and_return(the_stack)
+      strategy.run_hook(:some_hook)
+    end
+  end
 end

@@ -4,7 +4,11 @@ module CfDeployer
     def self.component_json component, config
       json_file = File.join(config[:config_dir], "#{component}.json")
       raise ApplicationError.new("#{json_file} is missing") unless File.exists?(json_file)
+      CfDeployer::Log.info "ERBing JSON for #{component}"
       ERB.new(File.read(json_file)).result(binding)
+    rescue RuntimeError,TypeError,NoMethodError => e
+      self.new.send :error_document, File.read(json_file)
+      raise e
     end
 
     def load(options)
@@ -35,7 +39,11 @@ module CfDeployer
 
     def load_yaml(text)
       YAML.load text
+    rescue Psych::SyntaxError => e
+      error_document text
+      raise e
     rescue
+      error_document text
       raise ApplicationError.new("The config file is not a valid yaml file")
     end
 
@@ -49,6 +57,12 @@ module CfDeployer
         component[section] = root_value + component_value + environment_value
         component[section].uniq!
       end
+    end
+
+    def error_document text
+      puts "-" * 80
+      puts text
+      puts "-" * 80
     end
 
     def to_array(value)
@@ -118,13 +132,12 @@ module CfDeployer
       end
 
       json_content = self.class.component_json component.to_s, config
+      CfDeployer::Log.info "Parsing JSON for #{component}"
       begin
         JSON.load json_content
       rescue JSON::ParserError => e
         puts json_content
-        puts '=' * 80
-        puts e.message[0..300]
-        puts '=' * 80
+        error_document e.message[0..300]
         raise "Couldn't parse JSON for component #{component}"
       end
     end

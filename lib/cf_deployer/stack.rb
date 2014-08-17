@@ -92,6 +92,9 @@ module CfDeployer
       @stack_name
     end
 
+    def template
+      @cf_driver.template
+    end
 
     private
 

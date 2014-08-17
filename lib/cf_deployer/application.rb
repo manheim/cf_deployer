@@ -42,12 +42,21 @@ module CfDeployer
       components.each &:json
     end
 
+    def diff
+      components = get_targets().sort
+      components.each &:diff
+    end
+
     def status component_name, verbosity
       statuses = {}
       @components.select { |component|  component_name.nil? || component_name == component.name }.each do |component|
         statuses[component.name] = component.status(verbosity != 'stacks')
       end
       statuses
+    end
+
+    def run_hook component_name, hook_name
+      @components.detect{ |component| component_name == component.name }.run_hook hook_name
     end
 
     def destroy

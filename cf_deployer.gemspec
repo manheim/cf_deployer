@@ -13,6 +13,7 @@ Gem::Specification.new do |gem|
   gem.add_runtime_dependency 'log4r'
   gem.add_runtime_dependency 'thor'
   gem.add_runtime_dependency 'rainbow'
+  gem.add_runtime_dependency 'diffy'
 
   gem.files         = `git ls-files`.split($\).reject {|f| f =~ /^samples\// }
   gem.executables   = gem.files.grep(%r{^bin/}).map{ |f| File.basename(f) }

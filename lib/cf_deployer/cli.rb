@@ -19,6 +19,13 @@ module CfDeployer
       CfDeployer.deploy merged_options
     end
 
+    desc "runhook [ENVIRONMENT] [COMPONENT] [HOOK_NAME]\t", 'Run the specified hook'
+    def runhook environment, component, hook_name
+      @hook_name = hook_name.to_sym
+      prep_for_action :runhook, environment, component
+      CfDeployer.runhook merged_options
+    end
+
     desc "destroy [ENVIRONMENT] [COMPONENT]\t", 'Destroy the specified environment/component'
     def destroy environment, component = nil
       prep_for_action :destroy, environment, component
@@ -29,6 +36,12 @@ module CfDeployer
     def config environment
       prep_for_action :config, environment
       CfDeployer.config merged_options
+    end
+
+    desc "diff [ENVIRONMENT] [COMPONENT]", 'Show a diff between the template of the active stack and the parsed CloudFormation JSON for the target component'
+    def diff environment, component = nil
+      prep_for_action :diff, environment, component
+      CfDeployer.diff merged_options
     end
 
     desc "json [ENVIRONMENT] [COMPONENT]", 'Show parsed CloudFormation JSON for the target component'
@@ -73,7 +86,9 @@ module CfDeployer
       end
 
       def merged_options
-        symbolize_all_keys options.merge({:environment => @environment, :component => @component})
+        the_merge_options = {:environment => @environment, :component => @component}
+        the_merge_options[:hook_name] = @hook_name if @hook_name
+        symbolize_all_keys options.merge(the_merge_options)
       end
 
       def set_log_level

@@ -6,3 +6,4 @@ CfDeployer::Log.log.outputters = nil
 def puts *args
 
 end
+

@@ -1,3 +1,4 @@
+require 'stringio'
 require 'spec_helper'
 
 describe CfDeployer::Hook do
@@ -61,5 +62,29 @@ describe CfDeployer::Hook do
     config_dir = File.expand_path('../../samples', __FILE__)
     context = { app: 'myApp', config_dir: config_dir}
     expect{CfDeployer::Hook.new('MyHook', {file: '../../tmp/test_code.rb', timeout: 20/1000.0}).run(context)}.to raise_error(Timeout::Error)
+  end
+
+  it 'should catch SyntaxError during eval and show nicer output' do
+    context = { app: 'myApp' }
+    the_hook = CfDeployer::Hook.new('MyHook', "puts 'hello")
+    the_hook.should_receive :error_document
+    expect { the_hook.run(context) }.to raise_error
+  end
+
+  it 'should catch NoMethodError during eval and show nicer output' do
+  end
+
+  it 'should catch ApplicationError during eval and show nicer output' do
+  end
+
+  def capture_stdout(&block)
+    original_stdout = $stdout
+    $stdout = fake = StringIO.new
+    begin
+      yield
+    ensure
+      $stdout = original_stdout
+    end
+    fake.string
   end
 end
