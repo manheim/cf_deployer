@@ -28,3 +28,6 @@ version 1.3.1
   - Adding way to run hooks manually (outside of deploy)   
   - Adding new command 'diff' to allow diffing between the deployed JSON
   - Split after-create and after-update hooks for create-or-update strategy
+
+version 1.3.2
+  - Display details of error message when referenced components do not exist
