@@ -130,8 +130,12 @@ module CfDeployer
       return unless setting.is_a?(Hash)
       ref_component_name = setting[:component].to_sym
       ref_component = @config[:components][ref_component_name]
-      output_key = setting[:'output-key'].to_sym
-      @errors << "No output '#{output_key}' found in CF template of component #{ref_component_name}, which is referenced by input setting '#{setting_name}' in component #{component_name}" unless ref_component[:defined_outputs].keys.include?(output_key)
+      if ref_component
+        output_key = setting[:'output-key'].to_sym
+        @errors << "No output '#{output_key}' found in CF template of component #{ref_component_name}, which is referenced by input setting '#{setting_name}' in component #{component_name}" unless ref_component[:defined_outputs].keys.include?(output_key)
+      else
+        @errors << "No component '#{ref_component_name}' found in CF template, which is referenced by input setting '#{setting_name}' in component #{component_name}"
+      end
     end
 
   end
