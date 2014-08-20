@@ -236,7 +236,6 @@ describe "Config Validation" do
       expect{ CfDeployer::ConfigValidation.new.validate(config) }.to raise_error("The option 'foo' of the environment 'dev' is not valid")
   end
 
-
   it "should get error if any output-reference settings do not have co-responding output" do
     config = {
       :targets => ['web', 'base'],
@@ -253,6 +252,24 @@ describe "Config Validation" do
         }
       }}
     expect{CfDeployer::ConfigValidation.new.validate(config)}.to raise_error("No output 'VPCID' found in CF template of component base, which is referenced by input setting 'vpc_id' in component web")
+  end
+
+  it "should get error if any referenced components do not exist" do
+    config = {
+      :targets => ['web', 'base'],
+      :application => 'myApp',
+      :components =>{
+        :base => {
+        },
+        :web => {
+          :inputs => {:vpc_id => {
+            :component => 'com2',
+            :'output-key' => 'VPCID'
+          }},
+          :defined_parameters => {:vpc_id =>{}}
+        }
+      }}
+    expect{CfDeployer::ConfigValidation.new.validate(config)}.to raise_error("No component 'com2' found in CF template, which is referenced by input setting 'vpc_id' in component web")
   end
 
   it "should get error if application name is missing" do
