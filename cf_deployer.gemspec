@@ -9,7 +9,7 @@ Gem::Specification.new do |gem|
   gem.homepage      = "http://github.com/manheim/cf_deployer"
   gem.license = 'MIT'
 
-  gem.add_runtime_dependency 'aws-sdk'
+  gem.add_runtime_dependency 'aws-sdk','1.44.0'
   gem.add_runtime_dependency 'log4r'
   gem.add_runtime_dependency 'thor'
   gem.add_runtime_dependency 'rainbow'
