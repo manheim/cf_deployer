@@ -1,8 +1,9 @@
 PATH
   remote: .
   specs:
-    cf_deployer (1.3.0)
-      aws-sdk
+    cf_deployer (1.3.7)
+      aws-sdk (= 1.44.0)
+      diffy
       log4r
       rainbow
       thor
@@ -15,16 +16,16 @@ GEM
       nokogiri (>= 1.4.4)
     coderay (1.1.0)
     diff-lcs (1.2.5)
-    diffy (3.0.6)
-    json (1.8.1)
+    diffy (3.0.7)
+    json (1.8.3)
     log4r (1.1.10)
     method_source (0.8.2)
-    mini_portile (0.6.0)
-    nokogiri (1.6.2.1)
-      mini_portile (= 0.6.0)
-    pry (0.9.12.6)
-      coderay (~> 1.0)
-      method_source (~> 0.8)
+    mini_portile (0.6.2)
+    nokogiri (1.6.6.2)
+      mini_portile (~> 0.6.0)
+    pry (0.10.1)
+      coderay (~> 1.1.0)
+      method_source (~> 0.8.1)
       slop (~> 3.4)
     rainbow (2.0.0)
     rake (10.3.0)
@@ -36,18 +37,16 @@ GEM
     rspec-expectations (2.14.5)
       diff-lcs (>= 1.1.3, < 2.0)
     rspec-mocks (2.14.6)
-    slop (3.5.0)
+    slop (3.6.0)
     thor (0.19.1)
-    yard (0.8.7.4)
+    yard (0.8.7.6)
 
 PLATFORMS
   ruby
 
 DEPENDENCIES
   cf_deployer!
-  diffy
-  pry
-  rainbow
-  rake
-  rspec
-  yard
+  pry (~> 0.10.1)
+  rake (~> 10.3.0)
+  rspec (= 2.14.1)
+  yard (~> 0.8.7.6)
