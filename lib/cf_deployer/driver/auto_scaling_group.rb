@@ -53,11 +53,16 @@ module CfDeployer
       private
 
       def healthy_instance_count
-        count = auto_scaling_instances.count do |instance|
-          instance.health_status == 'HEALTHY' && (load_balancers.empty? || instance_in_service?( instance.ec2_instance ))
+        begin
+          count = auto_scaling_instances.count do |instance|
+            instance.health_status == 'HEALTHY' && (load_balancers.empty? || instance_in_service?( instance.ec2_instance ))
+          end
+          Log.info "Healthy instance count: #{count}"
+          count
+        rescue => e
+          Log.info "Unable to determine healthy instance count due to error: #{e.message}"
+          -1
         end
-        Log.info "Healthy instance count: #{count}"
-        count
       end
 
       def instance_in_service? instance
