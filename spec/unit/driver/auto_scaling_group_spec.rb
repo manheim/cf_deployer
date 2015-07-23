@@ -57,6 +57,13 @@ describe 'Autoscaling group driver' do
       expect(@driver.send(:healthy_instance_count)).to eql 4
     end
 
+    it 'health check should be resilient against intermittent errors' do
+      instance5 = double('instance5')
+      expect(instance5).to receive(:health_status).and_raise(StandardError)
+      allow(group).to receive(:auto_scaling_instances){ [ instance5 ] }
+      expect(@driver.send(:healthy_instance_count)).to eql -1
+    end
+
     context 'when an elb is associated with the auto scaling group' do
       it 'should not include instances that are HEALTHY but not associated with the elb' do
         instance_collection = double('instance_collection', :health => [{:instance => ec2_instance1, :state => 'InService'}])
