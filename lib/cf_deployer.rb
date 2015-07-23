@@ -38,7 +38,7 @@ require_relative 'cf_deployer/defaults'
 
 module CfDeployer
 
-  AWS.config(:max_retries => 5)
+  AWS.config(:max_retries => 20)
 
   def self.config opts
     config = self.parseconfig opts, false
