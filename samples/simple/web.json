@@ -20,6 +20,11 @@
     "ElasticLoadBalancer": {
       "Description": "Name of existing ELB",
       "Type": "String"
+    },
+    "AvailabilityZone" : {
+      "Description" : "The availability zone where EC2 instances are created",
+      "Type": "String",
+      "Default": "us-east-1c"
     }
   },
   "Mappings"  : {
@@ -47,9 +52,7 @@
       },
 
       "Properties": {
-        "AvailabilityZones": {
-          "Fn::GetAZs": ""
-        },
+        "AvailabilityZones" : [ { "Ref" : "AvailabilityZone" } ],
         "LaunchConfigurationName": {
           "Ref": "LaunchConfig"
         },
