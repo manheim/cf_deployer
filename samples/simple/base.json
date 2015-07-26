@@ -8,13 +8,18 @@
       "Description": "TCP/IP port of the web server",
       "Type": "String",
       "Default": "8000"
+    },
+    "AvailabilityZone" : {
+      "Description" : "The availability zone where EC2 instances are created",
+      "Type": "String",
+      "Default": "us-east-1c"
     }
   },
   "Resources" : {
     "ElasticLoadBalancer": {
       "Type": "AWS::ElasticLoadBalancing::LoadBalancer",
       "Properties": {
-        "AvailabilityZones": { "Fn::GetAZs": "" },
+        "AvailabilityZones" : [ { "Ref" : "AvailabilityZone" } ],
         "Listeners": [ {
           "LoadBalancerPort": "80",
           "InstancePort": {

@@ -30,8 +30,12 @@
       "Default": "0.0.0.0/0",
       "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
       "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x."
-   }
-
+    },
+    "AvailabilityZone" : {
+      "Description" : "The availability zone where EC2 instances are created",
+      "Type": "String",
+      "Default": "us-east-1c"
+    }
   },
 
   "Mappings" : {
@@ -66,7 +70,7 @@
     "WebServerGroup" : {
       "Type" : "AWS::AutoScaling::AutoScalingGroup",
       "Properties" : {
-        "AvailabilityZones" : { "Fn::GetAZs" : "" },
+        "AvailabilityZones" : [ { "Ref" : "AvailabilityZone" } ],
         "LaunchConfigurationName" : { "Ref" : "LaunchConfig" },
         "MinSize" : "1",
         "MaxSize" : "1",
@@ -102,7 +106,7 @@
     "ElasticLoadBalancer" : {
       "Type" : "AWS::ElasticLoadBalancing::LoadBalancer",
       "Properties" : {
-        "AvailabilityZones" : { "Fn::GetAZs" : "" },
+        "AvailabilityZones" : [ { "Ref" : "AvailabilityZone" } ],
         "Listeners" : [ {
           "LoadBalancerPort" : "80",
           "InstancePort" : { "Ref" : "WebServerPort" },
