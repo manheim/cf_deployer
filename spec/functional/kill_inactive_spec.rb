@@ -26,7 +26,7 @@ describe 'Kill Inactive' do
       allow(CfDeployer::Stack).to receive(:new).with('cf-deployer-sample-cname-swap-test-web-G', 'web', anything) { green_stack }
       dns_driver = double('route53 driver')
       allow(CfDeployer::Driver::Route53).to receive(:new) { dns_driver }
-      allow(dns_driver).to receive(:find_alias_target).with('zhao.com', 'test1.zhao.com'){ 'BLUE-elb.aws.amazon.com' }
+      allow(dns_driver).to receive(:find_alias_target).with('aws-dev.manheim.com', 'cf-deployer-test.aws-dev.manheim.com'){ 'BLUE-elb.aws.amazon.com' }
 
       CfDeployer::CLI.start(['kill_inactive', 'test', 'web', '-f', 'samples/cname-swap/cf_deployer.yml'])
       expect(green_stack).to be_deleted
