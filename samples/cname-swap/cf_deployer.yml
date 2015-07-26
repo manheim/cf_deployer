@@ -1,8 +1,8 @@
 #To make this sample work you need to create a keypair in Amazon, then fill it in here
 <%
 #You will need to have a hosted zone created in route53 in Amazon to use this.  Fill it in here:
-dns_zone = 'zhao.com'
-dns_fqdn = 'test1.zhao.com'
+dns_zone = ENV['DNS_ZONE'] || 'aws-dev.manheim.com'
+dns_fqdn = ENV['DNS_FQDN'] || 'cf-deployer-test.aws-dev.manheim.com'
 %>
 # The name of your application
 application: cf-deployer-sample-cname-swap
