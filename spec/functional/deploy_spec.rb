@@ -33,14 +33,14 @@ describe 'Deploy' do
       allow(CfDeployer::Stack).to receive(:new).with('cf-deployer-sample-cname-swap-dev-web-G', 'web', anything()) { green_stack }
       allow(CfDeployer::Driver::Elb).to receive(:new) { elb_driver }
       allow(CfDeployer::Driver::Route53).to receive(:new) { dns_driver }
-      allow(dns_driver).to receive(:find_alias_target).with('zhao.com', 'test1.zhao.com'){ 'BLUE-elb.zhao.com' }
-      allow(elb_driver).to receive(:find_dns_and_zone_id).with('BLUE-elb') { {:dns_name => 'blue-elb.zhao.com', :canonical_hosted_zone_name_id => 'BLUE111'}}
-      allow(elb_driver).to receive(:find_dns_and_zone_id).with('GREEN-elb') { {:dns_name => 'green-elb.zhao.com', :canonical_hosted_zone_name_id => 'GREEN111'}}
+      allow(dns_driver).to receive(:find_alias_target).with('aws-dev.manheim.com', 'cf-deployer-test.aws-dev.manheim.com'){ 'BLUE-elb.aws-dev.manheim.com' }
+      allow(elb_driver).to receive(:find_dns_and_zone_id).with('BLUE-elb') { {:dns_name => 'blue-elb.aws-dev.manheim.com', :canonical_hosted_zone_name_id => 'BLUE111'}}
+      allow(elb_driver).to receive(:find_dns_and_zone_id).with('GREEN-elb') { {:dns_name => 'green-elb.aws-dev.manheim.com', :canonical_hosted_zone_name_id => 'GREEN111'}}
       allow(CfDeployer::Driver::AutoScalingGroup).to receive(:new).with('blueASG') { blue_asg_driver }
       allow(CfDeployer::Driver::AutoScalingGroup).to receive(:new).with('greenASG') { green_asg_driver }
       allow(green_asg_driver).to receive(:describe) {{desired: 0, min: 0, max: 0}}
       allow(blue_asg_driver).to receive(:describe) {{desired: 2, min: 1, max: 5}}
-      allow(dns_driver).to receive(:set_alias_target).with('zhao.com', 'test1.zhao.com', 'GREEN111', 'green-elb.zhao.com')
+      allow(dns_driver).to receive(:set_alias_target).with('aws-dev.manheim.com', 'cf-deployer-test.aws-dev.manheim.com', 'GREEN111', 'green-elb.aws-dev.manheim.com')
       expect(green_asg_driver).to receive(:warm_up).with(2)
       CfDeployer::CLI.start(['deploy', 'dev', 'web', '-f', 'samples/cname-swap/cf_deployer.yml'])
       expect(green_stack).to be_deleted
