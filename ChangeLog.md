@@ -42,3 +42,7 @@ version 1.3.7
   - Increased the number of AWS-SDK retries
   - Added missing after-update hook to config validation
   - Added rescue around healthy_instance_count, to prevent intermittent failures from stopping deployment
+
+version 1.3.8
+  - Moved dependencies out of Gemfile and into gemspec
+  - Removed Gemfile.lock
