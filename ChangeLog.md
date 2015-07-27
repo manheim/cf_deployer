@@ -31,3 +31,14 @@ version 1.3.1
 
 version 1.3.2
   - Display details of error message when referenced components do not exist
+
+version 1.3.3
+  - increase default timeout from 900 to 1800
+
+version 1.3.6
+  - explicitly enforce aws-sdk v.1.44.0 as a dependency
+
+version 1.3.7
+  - Increased the number of AWS-SDK retries
+  - Added missing after-update hook to config validation
+  - Added rescue around healthy_instance_count, to prevent intermittent failures from stopping deployment
