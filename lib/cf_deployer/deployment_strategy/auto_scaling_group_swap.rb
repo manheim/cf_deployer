@@ -2,7 +2,7 @@ module CfDeployer
   module DeploymentStrategy
     class AutoScalingGroupSwap < BlueGreen
 
-      
+
       def deploy
         check_blue_green_not_both_active 'Deployment'
         Log.info "Found active stack #{active_stack.name}" if active_stack
@@ -33,8 +33,12 @@ module CfDeployer
 
 
       def check_blue_green_not_both_active action
-        active_stacks = get_active_asg(active_stack) + get_active_asg(inactive_stack)
-        raise BothStacksActiveError.new("Found both auto-scaling-groups, #{active_stacks}, in green and blue stacks are active. #{action} aborted!") if both_stacks_active?
+        begin
+          active_stacks = get_active_asg(active_stack) + get_active_asg(inactive_stack)
+          raise BothStacksActiveError.new("Found both auto-scaling-groups, #{active_stacks}, in green and blue stacks are active. #{action} aborted!") if both_stacks_active?
+        rescue ApplicationError => ignored
+
+        end
       end
 
       def swap_group is_switching_to_cooled = false
@@ -80,8 +84,13 @@ module CfDeployer
       def get_active_asg stack
         return [] unless stack && stack.exists?
         group_ids(stack).select do |id|
-          result = asg_driver(id).describe
-          result[:min] > 0  && result[:max] > 0 && result[:desired] > 0
+          begin
+            asg_driver = asg_driver(id)
+            result = asg_driver.describe
+            result[:min] > 0 && result[:max] > 0 && result[:desired] > 0
+          rescue AWS::Core::Resource::NotFound => ignored
+
+          end
         end
       end
 
