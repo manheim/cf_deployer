@@ -55,7 +55,6 @@ module CfDeployer
       def healthy_instance_count
         begin
           count = auto_scaling_instances.count do |instance|
-            puts "*********** status: #{instance.health_status} ELB empty?: #{load_balancers.empty?} instance: #{instance_in_service?( instance.ec2_instance )}"
             instance.health_status == 'HEALTHY' && (load_balancers.empty? || instance_in_service?( instance.ec2_instance ))
           end
           Log.info "Healthy instance count: #{count}"
