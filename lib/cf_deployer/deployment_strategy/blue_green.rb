@@ -67,8 +67,6 @@ module CfDeployer
         return blue_stack if stack_active?(blue_stack)
         nil
       end
-
-
     end
   end
 end
