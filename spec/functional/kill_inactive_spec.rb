@@ -47,6 +47,10 @@ describe 'Kill Inactive' do
       allow(CfDeployer::Stack).to receive(:new).with('cf-deployer-sample-asg-swap-test-web-G', 'web', anything) { green_stack }
       allow(CfDeployer::Driver::AutoScalingGroup).to receive(:new).with('greenASG') { green_asg_driver }
       allow(CfDeployer::Driver::AutoScalingGroup).to receive(:new).with('blueASG') { blue_asg_driver }
+      allow(blue_stack).to receive(:asg_ids) { ['blueASG'] }
+      allow(green_stack).to receive(:asg_ids) { ['greenASG'] }
+      allow(blue_asg_driver).to receive(:'exists?').and_return(true)
+      allow(green_asg_driver).to receive(:'exists?').and_return(true)
       allow(green_asg_driver).to receive(:describe) { {desired: 0, min: 0, max: 0} }
       allow(blue_asg_driver).to receive(:describe) { {desired: 1, min: 1, max: 2} }
       CfDeployer::CLI.start(['kill_inactive', 'test', 'web', '-f', 'samples/simple/cf_deployer.yml'])

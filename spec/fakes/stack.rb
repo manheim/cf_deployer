@@ -18,6 +18,7 @@ module Fakes
       raise 'Stack is dead' unless @exists
       @outputs[key]
     end
+    alias_method :find_output, :output
 
     def set_output(key, value)
       @outputs[key] = value
@@ -60,6 +61,10 @@ module Fakes
 
     def status
       @status
+    end
+
+    def asg_ids
+      []
     end
   end
 end

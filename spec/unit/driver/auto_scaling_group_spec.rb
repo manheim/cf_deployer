@@ -25,6 +25,11 @@ describe 'Autoscaling group driver' do
     @driver.describe.should eq({ min: 1, max: 4, desired: 2})
   end
 
+  it 'should determine exists from AWS API object' do
+    allow(group).to receive(:exists?).and_return(true)
+    expect(@driver.exists?).to be(true)
+  end
+
   describe '#warm_up' do
     it 'should warm up the group to the desired size' do
       expect(group).to receive(:auto_scaling_instances){[instance1, instance2]}

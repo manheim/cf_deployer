@@ -69,6 +69,10 @@ module CfDeployer
         resources
       end
 
+      def resource_summaries type = nil
+        aws_stack.resource_summaries.reject {|summary| type && summary[:resource_type] != type}
+      end
+
       def template
         aws_stack.template
       end
