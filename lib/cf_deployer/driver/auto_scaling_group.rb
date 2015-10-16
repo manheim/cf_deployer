@@ -29,7 +29,7 @@ module CfDeployer
 
       def warm_up_cooled_group options
         CfDeployer::Driver::DryRun.guard 'Skipping update of ASG min & max instance count' do
-          aws_group.update :min_size =>  options[:min], :max_size => options[:max]
+          aws_group.update :min_size => options[:min], :max_size => options[:max]
         end
         warm_up options[:desired]
       end
@@ -48,6 +48,10 @@ module CfDeployer
           instance_info[instance.id] = CfDeployer::Driver::Instance.new(instance).status
         end
         instance_info
+      end
+
+      def exists?
+        aws_group.exists?
       end
 
       private
@@ -81,11 +85,9 @@ module CfDeployer
         }
       end
 
-
       def aws_group
         @my_group ||= AWS::AutoScaling.new.groups[group_name]
       end
-
     end
   end
 end

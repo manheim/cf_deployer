@@ -74,29 +74,29 @@ module CfDeployer
       end
 
       def warm_up_inactive_stack
-        group_ids(inactive_stack).each_with_index do |id, index|
-          asg_driver(id).warm_up get_desired(id, index)
+        active_ids = active_stack ? template_asg_name_to_ids(active_stack) : {}
+        template_asg_name_to_ids(inactive_stack).each do |name, id|
+          target_id = active_ids[name] || id
+          asg_driver(id).warm_up(asg_driver(target_id).describe[:desired])
         end
       end
 
-      def get_desired(id, index)
-        group_id =  active_stack ? group_ids(active_stack)[index] : id
-        asg_driver(group_id).describe[:desired]
-      end
-
-      def group_ids(stack)
-        return [] unless asg_id_outputs
-        asg_id_outputs.map { |id| stack.output id }
+      def template_asg_name_to_ids(stack)
+        {}.tap do |result|
+          (asg_name_outputs || []).each do |name|
+            id = stack.find_output(name)
+            result[name] = id if id
+          end
+        end
       end
 
       def asg_driver name
         @auto_scaling_group_drivers[name] ||= CfDeployer::Driver::AutoScalingGroup.new name
       end
 
-      def asg_id_outputs
+      def asg_name_outputs
         @context[:settings][:'auto-scaling-group-name-output']
       end
-
     end
   end
 end

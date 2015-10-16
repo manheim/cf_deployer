@@ -30,5 +30,9 @@ module CfDeployer
          log.level = Log4r::INFO
       end
     end
+
+    def self.level
+      log.level
+    end
   end
 end

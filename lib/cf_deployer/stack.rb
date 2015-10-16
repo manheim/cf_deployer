@@ -38,8 +38,12 @@ module CfDeployer
     end
 
     def output key
+      find_output(key) || (raise ApplicationError.new("'#{key}' is empty from stack #{name} output"))
+    end
+
+    def find_output key
       begin
-        @cf_driver.query_output(key) || (raise ApplicationError.new("'#{key}' is empty from stack #{name} output"))
+        @cf_driver.query_output(key)
       rescue AWS::CloudFormation::Errors::ValidationError => e
         raise ResourceNotInReadyState.new("Resource stack not in ready state yet, perhaps you should provision it first?")
       end
@@ -94,6 +98,12 @@ module CfDeployer
 
     def template
       @cf_driver.template
+    end
+
+    def asg_ids
+      @cf_driver.resource_summaries('AWS::AutoScaling::AutoScalingGroup').map do |summary|
+        summary[:physical_resource_id]
+      end
     end
 
     private

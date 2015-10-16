@@ -5,6 +5,10 @@ require_relative '../lib/cf_deployer'
 begin
  CfDeployer::CLI.start(ARGV)
 rescue CfDeployer::ApplicationError => e
-  puts "Error: #{e.message}"
+  if CfDeployer::Log.level == 'debug'
+    puts "Error: #{e.message}"
+  else
+    puts $!, $@
+  end
   exit(1)
 end

@@ -2,7 +2,6 @@ module CfDeployer
   module DeploymentStrategy
     class AutoScalingGroupSwap < BlueGreen
 
-      
       def deploy
         check_blue_green_not_both_active 'Deployment'
         Log.info "Found active stack #{active_stack.name}" if active_stack
@@ -15,7 +14,6 @@ module CfDeployer
         Log.info "#{component_name} deployed successfully"
       end
 
-
       def kill_inactive
         check_blue_green_not_both_active 'Kill Inactive'
         raise ApplicationError.new('Only one color stack exists, cannot kill a non-existant version!') unless both_stacks_exist?
@@ -25,15 +23,13 @@ module CfDeployer
       def switch
         check_blue_green_not_both_active 'Switch'
         raise ApplicationError.new('Only one color stack exists, cannot switch to a non-existent version!') unless both_stacks_exist?
-        warm_up_cooled = true
-        swap_group warm_up_cooled
+        swap_group true
       end
 
       private
 
-
       def check_blue_green_not_both_active action
-        active_stacks = get_active_asg(active_stack) + get_active_asg(inactive_stack)
+        active_stacks = get_active_asgs(active_stack) + get_active_asgs(inactive_stack)
         raise BothStacksActiveError.new("Found both auto-scaling-groups, #{active_stacks}, in green and blue stacks are active. #{action} aborted!") if both_stacks_active?
       end
 
@@ -56,41 +52,33 @@ module CfDeployer
         active_stack && stack_active?(inactive_stack)
       end
 
-
       def warm_up_cooled_stack
-        group_ids(active_stack).each_with_index do |id, index|
+        inactive_ids = template_asg_name_to_ids(inactive_stack)
+        template_asg_name_to_ids(active_stack).each do |name, id|
           min_max_desired = asg_driver(id).describe
-          asg_driver(group_ids(inactive_stack)[index]).warm_up_cooled_group min_max_desired
+          asg_driver(inactive_ids[name]).warm_up_cooled_group min_max_desired
         end
       end
 
       def cool_down_active_stack
-        group_ids(active_stack).each do |id|
+        active_stack.asg_ids.each do |id|
           asg_driver(id).cool_down
         end
-
       end
 
       def stack_active?(stack)
-        return false unless stack.exists?
-        get_active_asg(stack).any?
+        stack.exists? && get_active_asgs(stack).any?
       end
 
-
-      def get_active_asg stack
+      def get_active_asgs stack
         return [] unless stack && stack.exists?
-        group_ids(stack).select do |id|
-          result = asg_driver(id).describe
-          result[:min] > 0  && result[:max] > 0 && result[:desired] > 0
+        stack.asg_ids.select do |id|
+          asg_driver = asg_driver(id)
+          if asg_driver.exists?
+            result = asg_driver.describe
+            result[:min] > 0 && result[:max] > 0 && result[:desired] > 0
+          end
         end
-      end
-
-      def asg_driver name
-        @auto_scaling_group_drivers[name] ||= CfDeployer::Driver::AutoScalingGroup.new name
-      end
-
-      def asg_id_outputs
-        @context[:settings][:'auto-scaling-group-name-output']
       end
 
       class BothStacksActiveError < ApplicationError
