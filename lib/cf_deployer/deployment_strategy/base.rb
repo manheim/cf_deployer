@@ -1,4 +1,3 @@
-
 module CfDeployer
   module DeploymentStrategy
 
@@ -96,7 +95,6 @@ module CfDeployer
       def asg_id_outputs
         @context[:settings][:'auto-scaling-group-name-output']
       end
-
     end
   end
 end

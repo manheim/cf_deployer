@@ -400,7 +400,7 @@ describe 'Auto Scaling Group Swap Deployment Strategy' do
 
     it 'should get status for both green and blue stacks' do
       asg_swap = CfDeployer::DeploymentStrategy.create(app, env, component, context)
-      expected_result = { 
+      expected_result = {
         'BLUE' => {
           :active => true,
           :status => 'blue deployed'
@@ -415,7 +415,7 @@ describe 'Auto Scaling Group Swap Deployment Strategy' do
 
     it 'should get status for both green and blue stacks including resources info' do
       asg_swap = CfDeployer::DeploymentStrategy.create(app, env, component, context)
-      expected_result = { 
+      expected_result = {
         'BLUE' => {
           :active => true,
           :status => 'blue deployed',
@@ -429,7 +429,5 @@ describe 'Auto Scaling Group Swap Deployment Strategy' do
       }
       asg_swap.status(true).should eq(expected_result)
     end
-
-
   end
 end

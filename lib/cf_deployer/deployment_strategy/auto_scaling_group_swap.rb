@@ -2,7 +2,6 @@ module CfDeployer
   module DeploymentStrategy
     class AutoScalingGroupSwap < BlueGreen
 
-      
       def deploy
         check_blue_green_not_both_active 'Deployment'
         Log.info "Found active stack #{active_stack.name}" if active_stack
@@ -14,7 +13,6 @@ module CfDeployer
         delete_stack(active_stack) if active_stack && !keep_previous_stack
         Log.info "#{component_name} deployed successfully"
       end
-
 
       def kill_inactive
         check_blue_green_not_both_active 'Kill Inactive'
@@ -56,7 +54,6 @@ module CfDeployer
         active_stack && stack_active?(inactive_stack)
       end
 
-
       def warm_up_cooled_stack
         group_ids(active_stack).each_with_index do |id, index|
           min_max_desired = asg_driver(id).describe
@@ -68,7 +65,6 @@ module CfDeployer
         group_ids(active_stack).each do |id|
           asg_driver(id).cool_down
         end
-
       end
 
       def stack_active?(stack)
