@@ -59,8 +59,31 @@ describe CfDeployer::Stack do
     end
   end
 
-  context "#ready?" do
+  context '#output' do
+    it 'should get output value' do
+      expect(@cf_driver).to receive(:query_output).with('mykey'){ 'myvalue'}
+      @stack.output('mykey').should eq('myvalue')
+    end
 
+    it 'should get error if output is empty' do
+      expect(@cf_driver).to receive(:query_output).with('mykey'){ nil }
+      expect{@stack.output('mykey')}.to raise_error("'mykey' is empty from stack test output")
+    end
+  end
+
+  context '#find_output' do
+    it 'should get output value' do
+      expect(@cf_driver).to receive(:query_output).with('mykey'){ 'myvalue'}
+      @stack.find_output('mykey').should eq('myvalue')
+    end
+
+    it 'should return nil for non-existent value' do
+      expect(@cf_driver).to receive(:query_output).with('mykey'){ nil }
+      @stack.find_output('mykey').should be(nil)
+    end
+  end
+
+  context "#ready?" do
     CfDeployer::Stack::READY_STATS.each do |status|
       it "should be ready when in #{status} status" do
         allow(@cf_driver).to receive(:stack_status) { status }
@@ -71,16 +94,6 @@ describe CfDeployer::Stack do
     it "should not be ready when not in a ready status" do
       allow(@cf_driver).to receive(:stack_status) { :my_fake_status }
       expect(@stack).not_to be_ready
-    end
-
-    it "should get error if output is empty" do
-      expect(@cf_driver).to receive(:query_output).with('mykey'){ nil }
-      expect{@stack.output('mykey')}.to raise_error("'mykey' is empty from stack test output")
-    end
-
-    it "should get output value" do
-      expect(@cf_driver).to receive(:query_output).with('mykey'){ 'myvalue'}
-      @stack.output('mykey').should eq('myvalue')
     end
   end
 
