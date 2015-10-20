@@ -1,4 +1,5 @@
 require 'spec_helper'
+
 describe 'CloudFormation' do
   let(:outputs) { [output1, output2] }
   let(:output1) { double('output1', :key => 'key1', :value => 'value1')}
