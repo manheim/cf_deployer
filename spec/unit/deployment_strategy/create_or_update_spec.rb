@@ -61,7 +61,7 @@ describe 'CreateOrUpdate Strategy' do
       context[:settings] = {}
       context[:settings][:'auto-scaling-group-name-output'] = ['AutoScalingGroupID']
       @stack.should_receive(:exists?).and_return(false)
-      allow(@stack).to receive(:output).with('AutoScalingGroupID') { 'asg_name' }
+      allow(@stack).to receive(:find_output).with('AutoScalingGroupID') { 'asg_name' }
       allow(CfDeployer::Driver::AutoScalingGroup).to receive(:new).with('asg_name') { asg_driver }
       allow(asg_driver).to receive(:describe) { {desired:2, min:1, max:3} }
       allow(@after_create_hook).to receive(:run).with(anything)

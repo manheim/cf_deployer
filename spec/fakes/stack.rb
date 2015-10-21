@@ -1,12 +1,15 @@
 module Fakes
   class Stack
     attr_reader :outputs, :parameters
+    attr_accessor :resource_statuses
+
     def initialize(options)
       @exists = options[:exists?].nil? ? true : options[:exists?]
       @outputs = options[:outputs] || {}
       @parameters = options[:parameters] || {}
       @name = options[:name] || 'Unnamed'
       @status = options[:status] || :ready
+      @resource_statuses = {}
     end
 
     def inspect

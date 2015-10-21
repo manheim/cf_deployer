@@ -5,7 +5,24 @@ describe 'CloudFormation' do
   let(:output1) { double('output1', :key => 'key1', :value => 'value1')}
   let(:output2) { double('output2', :key => 'key2', :value => 'value2')}
   let(:parameters) { double('parameters')}
-  let(:stack) { double('stack', :outputs => outputs, :parameters => parameters) }
+  let(:resource_summaries) { [
+      {
+          :resource_type => 'AWS::AutoScaling::AutoScalingGroup',
+          :physical_resource_id => 'asg_1',
+          :resource_status => 'STATUS_1'
+      },
+      {
+          :resource_type => 'AWS::AutoScaling::LaunchConfiguration',
+          :physical_resource_id => 'launch_config_1',
+          :resource_status => 'STATUS_2'
+      },
+      {
+          :resource_type => 'AWS::AutoScaling::AutoScalingGroup',
+          :physical_resource_id => 'asg_2',
+          :resource_status => 'STATUS_2'
+      }
+  ] }
+  let(:stack) { double('stack', :outputs => outputs, :parameters => parameters, :resource_summaries => resource_summaries) }
   let(:cloudFormation) {
     double('cloudFormation',
            :stacks =>
@@ -26,8 +43,18 @@ describe 'CloudFormation' do
   end
 
   context 'resource_statuses' do
-    it 'should be tested' do
-      false
+    it 'should get resource statuses' do
+      expected = {
+          'AWS::AutoScaling::AutoScalingGroup' => {
+              'asg_1' => 'STATUS_1',
+              'asg_2' => 'STATUS_2'
+          },
+          'AWS::AutoScaling::LaunchConfiguration' => {
+              'launch_config_1' => 'STATUS_2'
+          }
+      }
+
+      CfDeployer::Driver::CloudFormation.new('testStack').resource_statuses.should eq(expected)
     end
   end
 end
