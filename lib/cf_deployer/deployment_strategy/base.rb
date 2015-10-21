@@ -98,11 +98,6 @@ module CfDeployer
         end
       end
 
-      def group_ids(stack)
-        return [] unless asg_name_outputs
-        asg_name_outputs.map { |id| stack.output id }
-      end
-
       def asg_driver name
         @auto_scaling_group_drivers[name] ||= CfDeployer::Driver::AutoScalingGroup.new name
       end

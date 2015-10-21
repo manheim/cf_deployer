@@ -57,7 +57,7 @@ module CfDeployer
       end
 
       def cool_down_active_stack
-        group_ids(active_stack).each do |id|
+        get_active_asgs(active_stack).each do |id|
           asg_driver(id).cool_down
         end
       end
