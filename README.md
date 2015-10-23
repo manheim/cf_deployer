@@ -1,3 +1,5 @@
+[![Code Climate](https://codeclimate.com/github/manheim/cf_deployer/badges/gpa.svg)](https://codeclimate.com/github/manheim/cf_deployer)
+
 ##### [README](README.md) - [QUICKSTART](QUICKSTART.md) - [DETAILS](DETAILS.md) - [FAQ](FAQ.md)
 
 CFDeployer
