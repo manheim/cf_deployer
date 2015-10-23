@@ -1,3 +1,4 @@
+[![Gem Version](https://badge.fury.io/rb/cf_deployer.svg)](https://badge.fury.io/rb/cf_deployer)
 [![Code Climate](https://codeclimate.com/github/manheim/cf_deployer/badges/gpa.svg)](https://codeclimate.com/github/manheim/cf_deployer)
 
 ##### [README](README.md) - [QUICKSTART](QUICKSTART.md) - [DETAILS](DETAILS.md) - [FAQ](FAQ.md)
