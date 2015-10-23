@@ -140,8 +140,9 @@ environments:
   end
 
   before :each do
-     ENV['timeout'] = nil
-     ENV['cfdeploy_settings_timeout'] = nil
+    ENV.delete('timeout')
+    ENV.delete('cfdeploy_settings_timeout')
+    ENV.delete('cfdeploy_inputs_timeout')
   end
 
   it "all the keys should be symbols in config" do

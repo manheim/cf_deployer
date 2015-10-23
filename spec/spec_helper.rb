@@ -25,7 +25,7 @@ RSpec.configure do |config|
     # mocks.verify_partial_doubles = true # causing tests to fail in base_spec
   end
 
-  # config.order = :random # There are tests failing in random order
+  config.order = :random
   config.run_all_when_everything_filtered = true
   # config.warnings = true # way too many warnings right now
 
