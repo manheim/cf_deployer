@@ -31,18 +31,18 @@ describe 'Auto Scaling Group Swap Deployment Strategy' do
     it 'no if no G and B stacks exist' do
       blue_stack.die!
       green_stack.die!
-      CfDeployer::DeploymentStrategy.create(app, env, component, context).exists?.should be_false
+      expect(CfDeployer::DeploymentStrategy.create(app, env, component, context).exists?).to be_falsey
     end
 
     it 'yes if B stacks exist' do
       blue_stack.live!
       green_stack.die!
-      CfDeployer::DeploymentStrategy.create(app, env, component, context).exists?.should be_true
+      expect(CfDeployer::DeploymentStrategy.create(app, env, component, context).exists?).to be_truthy
     end
     it 'yes if G  stacks exist' do
       blue_stack.die!
       green_stack.live!
-      CfDeployer::DeploymentStrategy.create(app, env, component, context).exists?.should be_true
+      expect(CfDeployer::DeploymentStrategy.create(app, env, component, context).exists?).to be_truthy
     end
 
   end
@@ -119,7 +119,7 @@ describe 'Auto Scaling Group Swap Deployment Strategy' do
         @log += "#{arg[:parameters][:name]} deleted."
       end
       CfDeployer::DeploymentStrategy.create(app, env, component, context).destroy
-      @log.should eq('green deleted.blue deleted.')
+      expect(@log).to eq('green deleted.blue deleted.')
     end
   end
 
@@ -367,7 +367,7 @@ describe 'Auto Scaling Group Swap Deployment Strategy' do
       allow(green_asg_driver).to receive(:describe) {{desired: 0, min: 0, max: 0}}
       allow(blue_asg_driver).to receive(:describe) {{desired: 3, min: 1, max: 5}}
       asg_swap = CfDeployer::DeploymentStrategy.create(app, env, component, context)
-      asg_swap.output_value("AutoScalingGroupID").should eq("blueASG")
+      expect(asg_swap.output_value("AutoScalingGroupID")).to eq("blueASG")
     end
 
     it 'should get the information where the value comes from if the active stack does not exist' do
@@ -378,7 +378,7 @@ describe 'Auto Scaling Group Swap Deployment Strategy' do
       allow(green_asg_driver).to receive(:describe) {{desired: 0, min: 0, max: 0}}
       allow(blue_asg_driver).to receive(:describe) {{desired: 0, min: 0, max: 0}}
       asg_swap = CfDeployer::DeploymentStrategy.create(app, env, component, context)
-      asg_swap.output_value(:a_key).should eq("The value will be referenced from the output a_key of undeployed component worker")
+      expect(asg_swap.output_value(:a_key)).to eq("The value will be referenced from the output a_key of undeployed component worker")
     end
   end
 
@@ -410,7 +410,7 @@ describe 'Auto Scaling Group Swap Deployment Strategy' do
           :status => 'green deployed'
         }
       }
-      asg_swap.status.should eq(expected_result)
+      expect(asg_swap.status).to eq(expected_result)
     end
 
     it 'should get status for both green and blue stacks including resources info' do
@@ -427,7 +427,7 @@ describe 'Auto Scaling Group Swap Deployment Strategy' do
           :resources => 'green resources'
         }
       }
-      asg_swap.status(true).should eq(expected_result)
+      expect(asg_swap.status(true)).to eq(expected_result)
     end
   end
 end

@@ -22,7 +22,7 @@ describe CfDeployer::Driver::Route53 do
       allow(AWS::Route53).to receive(:new) { route53 }
       allow(route53).to receive(:hosted_zones) { [zone] }
 
-      subject.find_alias_target('target.com', 'foo').should be_nil
+      expect(subject.find_alias_target('target.com', 'foo')).to be_nil
     end
 
     it "should get alias target" do
@@ -31,7 +31,7 @@ describe CfDeployer::Driver::Route53 do
       route53 = double('route53', :hosted_zones => [zone])
       allow(AWS::Route53).to receive(:new) { route53 }
 
-      subject.find_alias_target('Target.com', 'Foo.target.com').should eq('abc.com')
+      expect(subject.find_alias_target('Target.com', 'Foo.target.com')).to eq('abc.com')
     end
 
     it "should get a nil alias target when the record exists but has no alias target" do
@@ -40,7 +40,7 @@ describe CfDeployer::Driver::Route53 do
       route53 = double('route53', :hosted_zones => [zone])
       allow(AWS::Route53).to receive(:new) { route53 }
 
-      subject.find_alias_target('target.com', 'foo.target.com').should be_nil
+      expect(subject.find_alias_target('target.com', 'foo.target.com')).to be_nil
     end
 
     it "should get alias target when zone and host name having trailing dot" do
@@ -49,7 +49,7 @@ describe CfDeployer::Driver::Route53 do
       route53 = double('route53', :hosted_zones => [zone])
       allow(AWS::Route53).to receive(:new) { route53 }
 
-      subject.find_alias_target('target.com.', 'foo.target.com.').should eq('abc.com')
+      expect(subject.find_alias_target('target.com.', 'foo.target.com.')).to eq('abc.com')
     end
 
   end

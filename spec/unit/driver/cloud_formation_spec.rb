@@ -18,11 +18,11 @@ describe 'CloudFormation' do
   end
 
   it 'should get outputs of stack' do
-    CfDeployer::Driver::CloudFormation.new('testStack').outputs.should eq({'key1' => 'value1', 'key2' => 'value2'})
+    expect(CfDeployer::Driver::CloudFormation.new('testStack').outputs).to eq({'key1' => 'value1', 'key2' => 'value2'})
   end
 
   it 'should get parameters of stack' do
-    CfDeployer::Driver::CloudFormation.new('testStack').parameters.should eq(parameters)
+    expect(CfDeployer::Driver::CloudFormation.new('testStack').parameters).to eq(parameters)
   end
 
   context 'resource_statuses' do

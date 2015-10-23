@@ -28,11 +28,11 @@ describe "application" do
   end
 
   it "application should get all components" do
-    @app.components.length.should eq(4)
-    @base.should_not be_nil
-    @db.should_not be_nil
-    @queue.should_not be_nil
-    @web.should_not be_nil
+    expect(@app.components.length).to eq(4)
+    expect(@base).not_to be_nil
+    expect(@db).not_to be_nil
+    expect(@queue).not_to be_nil
+    expect(@web).not_to be_nil
   end
 
   context "order components by dependencies" do
@@ -154,7 +154,7 @@ describe "application" do
     context "deploy all components" do
       it "should deploy all components if no component specified" do
         @app.deploy
-        @log.should eq("base db queue web ")
+        expect(@log).to eq("base db queue web ")
       end
     end
 
@@ -162,7 +162,7 @@ describe "application" do
       it "should deploy specified components" do
         @context[:targets] = ['web', 'db']
         @app.deploy
-        @log.should eq("db web ")
+        expect(@log).to eq("db web ")
       end
     end
   end
@@ -179,13 +179,13 @@ describe "application" do
 
     it 'should get json templates for all components' do
       @app.json
-      @log.should eq("base db queue web ")
+      expect(@log).to eq("base db queue web ")
     end
 
     it 'should get json templates for components specified' do
       @context[:targets] = ['web', 'db']
       @app.json
-      @log.should eq('db web ')
+      expect(@log).to eq('db web ')
     end
   end
 end
