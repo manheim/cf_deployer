@@ -1,4 +1,5 @@
 [![Gem Version](https://badge.fury.io/rb/cf_deployer.svg)](https://badge.fury.io/rb/cf_deployer)
+[![Build Status](https://travis-ci.org/manheim/cf_deployer.svg?branch=master)](https://travis-ci.org/manheim/cf_deployer)
 [![Code Climate](https://codeclimate.com/github/manheim/cf_deployer/badges/gpa.svg)](https://codeclimate.com/github/manheim/cf_deployer)
 [![License](http://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
