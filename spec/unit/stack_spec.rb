@@ -80,7 +80,7 @@ describe CfDeployer::Stack do
 
     it "should get output value" do
       expect(@cf_driver).to receive(:query_output).with('mykey'){ 'myvalue'}
-      @stack.output('mykey').should eq('myvalue')
+      expect(@stack.output('mykey')).to eq('myvalue')
     end
   end
 

@@ -1,0 +1,4 @@
+--color
+--format documentation
+--format html
+--out spec_result.html

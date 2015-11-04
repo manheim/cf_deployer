@@ -22,7 +22,7 @@ describe 'Autoscaling group driver' do
   end
 
   it 'should describe group' do
-    @driver.describe.should eq({ min: 1, max: 4, desired: 2})
+    expect(@driver.describe).to eq({ min: 1, max: 4, desired: 2})
   end
 
   describe '#warm_up' do
