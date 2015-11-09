@@ -46,3 +46,7 @@ version 1.3.7
 version 1.3.8
   - Moved dependencies out of Gemfile and into gemspec
   - Removed Gemfile.lock
+
+version 1.3.9
+  - Allow new ASGs to be added to template (See: https://github.com/manheim/cf_deployer/issues/31)
+
