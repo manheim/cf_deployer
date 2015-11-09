@@ -73,19 +73,29 @@ module CfDeployer
       end
 
       def warm_up_inactive_stack
-        group_ids(inactive_stack).each_with_index do |id, index|
-          asg_driver(id).warm_up get_desired(id, index)
+        warm_up_stack(inactive_stack, active_stack)
+      end
+
+      def warm_up_stack stack, previous_stack = nil, adjust_min_max = false
+        previous_ids = previous_stack ? template_asg_name_to_ids(previous_stack) : {}
+        template_asg_name_to_ids(stack).each do |name, id|
+          driver = asg_driver(id)
+          description = asg_driver(previous_ids[name] || id).describe
+          if adjust_min_max
+            driver.warm_up_cooled_group(description)
+          else
+            driver.warm_up(description[:desired])
+          end
         end
       end
 
-      def get_desired(id, index)
-        group_id =  active_stack ? group_ids(active_stack)[index] : id
-        asg_driver(group_id).describe[:desired]
-      end
-
-      def group_ids(stack)
-        return [] unless asg_name_outputs
-        asg_name_outputs.map { |id| stack.output id }
+      def template_asg_name_to_ids(stack)
+        {}.tap do |result|
+          (asg_name_outputs || []).each do |name|
+            id = stack.find_output(name)
+            result[name] = id if id
+          end
+        end
       end
 
       def asg_driver name

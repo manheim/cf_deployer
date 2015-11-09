@@ -1,12 +1,15 @@
 module Fakes
   class Stack
     attr_reader :outputs, :parameters
+    attr_accessor :resource_statuses
+
     def initialize(options)
       @exists = options[:exists?].nil? ? true : options[:exists?]
       @outputs = options[:outputs] || {}
       @parameters = options[:parameters] || {}
       @name = options[:name] || 'Unnamed'
       @status = options[:status] || :ready
+      @resource_statuses = {}
     end
 
     def inspect
@@ -18,6 +21,7 @@ module Fakes
       raise 'Stack is dead' unless @exists
       @outputs[key]
     end
+    alias_method :find_output, :output
 
     def set_output(key, value)
       @outputs[key] = value

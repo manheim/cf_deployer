@@ -53,14 +53,11 @@ module CfDeployer
       end
 
       def warm_up_cooled_stack
-        group_ids(active_stack).each_with_index do |id, index|
-          min_max_desired = asg_driver(id).describe
-          asg_driver(group_ids(inactive_stack)[index]).warm_up_cooled_group min_max_desired
-        end
+        warm_up_stack(inactive_stack, active_stack, true)
       end
 
       def cool_down_active_stack
-        group_ids(active_stack).each do |id|
+        get_active_asgs(active_stack).each do |id|
           asg_driver(id).cool_down
         end
       end
@@ -70,10 +67,10 @@ module CfDeployer
       end
 
       def get_active_asgs stack
-        return [] unless stack && stack.exists?
-        group_ids(stack).select do |id|
+        return [] unless stack && stack.exists? && stack.resource_statuses[:asg_instances]
+        stack.resource_statuses[:asg_instances].keys.select do |id|
           result = asg_driver(id).describe
-          result[:min] > 0  && result[:max] > 0 && result[:desired] > 0
+          result[:min] > 0 && result[:max] > 0 && result[:desired] > 0
         end
       end
 
@@ -81,7 +78,7 @@ module CfDeployer
         @auto_scaling_group_drivers[name] ||= CfDeployer::Driver::AutoScalingGroup.new name
       end
 
-      def asg_id_outputs
+      def asg_name_outputs
         @context[:settings][:'auto-scaling-group-name-output']
       end
 

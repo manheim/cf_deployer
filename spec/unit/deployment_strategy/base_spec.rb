@@ -134,4 +134,78 @@ describe 'Base Deployment Strategy' do
       strategy.run_hook(:some_hook)
     end
   end
+
+  context '#warm_up_stack' do
+    let(:context) {
+      {
+          :'deployment-strategy' => 'base',
+          :settings => {
+              :'auto-scaling-group-name-output' => ['ASG1', 'ASG2']
+          }
+      }
+    }
+    let(:blue_stack) { double('blue_stack') }
+    let(:green_stack) { double('green_stack') }
+    let(:blue_asg_driver_1) { double('blue_asg_driver_1') }
+    let(:blue_asg_driver_2) { double('blue_asg_driver_2') }
+    let(:green_asg_driver_1) { double('green_asg_driver_1') }
+    let(:green_asg_driver_2) { double('green_asg_driver_2') }
+
+    before :each do
+      allow(CfDeployer::Driver::AutoScalingGroup).to receive(:new).with('blue_asg_driver_1') { blue_asg_driver_1 }
+      allow(CfDeployer::Driver::AutoScalingGroup).to receive(:new).with('blue_asg_driver_2') { blue_asg_driver_2 }
+      allow(CfDeployer::Driver::AutoScalingGroup).to receive(:new).with('green_asg_driver_1') { green_asg_driver_1 }
+      allow(CfDeployer::Driver::AutoScalingGroup).to receive(:new).with('green_asg_driver_2') { green_asg_driver_2 }
+
+      allow(green_stack).to receive(:find_output).with('ASG1') { 'green_asg_driver_1' }
+      allow(green_stack).to receive(:find_output).with('ASG2') { 'green_asg_driver_2' }
+    end
+
+    it 'should warm up ASG with previous stack ASG values when present' do
+      allow(blue_stack).to receive(:resource_statuses) { { 'blueASG1' => nil, 'blueASG2' => nil } }
+      allow(blue_stack).to receive(:find_output).with('ASG1') { 'blue_asg_driver_1' }
+      allow(blue_stack).to receive(:find_output).with('ASG2') { 'blue_asg_driver_2' }
+      allow(blue_asg_driver_1).to receive(:describe) { {min: 1, desired: 2, max: 3} }
+      allow(blue_asg_driver_2).to receive(:describe) { {min: 2, desired: 3, max: 4} }
+      strategy = CfDeployer::DeploymentStrategy.create('myApp', 'uat', 'web', context)
+
+      expect(green_asg_driver_1).to receive(:warm_up).with(2)
+      expect(green_asg_driver_2).to receive(:warm_up).with(3)
+      strategy.send(:warm_up_stack, green_stack, blue_stack)
+    end
+
+    it 'should warm up ASG with own values when previous stack does not contain ASG' do
+      allow(blue_stack).to receive(:find_output).with(anything) { nil }
+      allow(green_asg_driver_1).to receive(:describe) { {min: 3, desired: 4, max: 5} }
+      allow(green_asg_driver_2).to receive(:describe) { {min: 4, desired: 5, max: 6} }
+      strategy = CfDeployer::DeploymentStrategy.create('myApp', 'uat', 'web', context)
+
+      expect(green_asg_driver_1).to receive(:warm_up).with(4)
+      expect(green_asg_driver_2).to receive(:warm_up).with(5)
+      strategy.send(:warm_up_stack, green_stack, blue_stack)
+    end
+  end
+
+  context '#template_asg_name_to_ids' do
+    let(:context) {
+      {
+          :'deployment-strategy' => 'base',
+          :settings => {
+              :'auto-scaling-group-name-output' => ['ASG1', 'ASG2']
+          }
+      }
+    }
+
+    it 'should map names in templates to stack outputs' do
+      allow(blue_stack).to receive(:find_output).with('ASG1') { 'blue_asg_driver_1' }
+      allow(blue_stack).to receive(:find_output).with('ASG2') { 'blue_asg_driver_2' }
+      expected = {
+          'ASG1' => 'blue_asg_driver_1',
+          'ASG2' => 'blue_asg_driver_2',
+      }
+
+      strategy = CfDeployer::DeploymentStrategy.create('myApp', 'uat', 'web', context)
+      expect(strategy.send(:template_asg_name_to_ids, blue_stack)).to eq(expected)
+    end
+  end
 end

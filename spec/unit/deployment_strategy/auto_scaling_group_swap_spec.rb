@@ -1,4 +1,4 @@
-require 'spec_helper'
+require 'functional_spec_helper'
 
 describe 'Auto Scaling Group Swap Deployment Strategy' do
   let(:app) { 'myapp' }
@@ -6,12 +6,12 @@ describe 'Auto Scaling Group Swap Deployment Strategy' do
   let(:component) { 'worker' }
 
   let(:context) {
-        {
-          :'deployment-strategy' => 'auto-scaling-group-swap',
-          :settings => {
+    {
+        :'deployment-strategy' => 'auto-scaling-group-swap',
+        :settings => {
             :'auto-scaling-group-name-output' => ['AutoScalingGroupID']
-          }
         }
+    }
   }
 
   let(:blue_asg_driver) { double('blue_asg_driver') }
@@ -23,6 +23,10 @@ describe 'Auto Scaling Group Swap Deployment Strategy' do
   before :each do
     allow(blue_stack).to receive(:output).with('AutoScalingGroupID'){'blueASG'}
     allow(green_stack).to receive(:output).with('AutoScalingGroupID'){'greenASG'}
+    allow(blue_stack).to receive(:find_output).with('AutoScalingGroupID'){'blueASG'}
+    allow(green_stack).to receive(:find_output).with('AutoScalingGroupID'){'greenASG'}
+    allow(blue_stack).to receive(:resource_statuses) { asg_ids('blueASG') }
+    allow(green_stack).to receive(:resource_statuses) { asg_ids('greenASG') }
     allow(CfDeployer::Stack).to receive(:new).with('myapp-dev-worker-B', 'worker', context) { blue_stack }
     allow(CfDeployer::Stack).to receive(:new).with('myapp-dev-worker-G', 'worker', context) { green_stack }
   end
@@ -59,7 +63,7 @@ describe 'Auto Scaling Group Swap Deployment Strategy' do
       CfDeployer::DeploymentStrategy.create(app, env, component, context).deploy
     end
 
-     it 'should deploy blue stack if green stack is not active' do
+    it 'should deploy blue stack if green stack is not active' do
       blue_stack.die!
       green_stack.live!
       allow(CfDeployer::Driver::AutoScalingGroup).to receive(:new).with('greenASG') { green_asg_driver }
@@ -137,7 +141,7 @@ describe 'Auto Scaling Group Swap Deployment Strategy' do
       CfDeployer::DeploymentStrategy.create(app, env, component, context).deploy
     end
 
-     it 'should deploy green stack if blue stack is active' do
+    it 'should deploy green stack if blue stack is active' do
       blue_stack.live!
       green_stack.live!
       allow(CfDeployer::Driver::AutoScalingGroup).to receive(:new).with('greenASG') { green_asg_driver }
@@ -196,17 +200,17 @@ describe 'Auto Scaling Group Swap Deployment Strategy' do
 
     context 'multiple ASG' do
       let(:context) {
-            {
-              :'deployment-strategy' => 'auto-scaling-group-swap',
-              :settings => {
+        {
+            :'deployment-strategy' => 'auto-scaling-group-swap',
+            :settings => {
                 :'auto-scaling-group-name-output' => ['AutoScalingGroupID', 'AlternateASGID']
-              }
             }
+        }
       }
 
       it 'should get error containing only "active" ASG if both blue and green stacks are active' do
-        allow(blue_stack).to receive(:output).with('AlternateASGID'){'AltblueASG'}
-        allow(green_stack).to receive(:output).with('AlternateASGID'){'AltgreenASG'}
+        allow(blue_stack).to receive(:find_output).with('AlternateASGID'){'AltblueASG'}
+        allow(green_stack).to receive(:find_output).with('AlternateASGID'){'AltgreenASG'}
         blue_stack.live!
         green_stack.live!
         alt_blue_asg_driver = double('alt_blue_asg_driver')
@@ -215,6 +219,7 @@ describe 'Auto Scaling Group Swap Deployment Strategy' do
         allow(CfDeployer::Driver::AutoScalingGroup).to receive(:new).with('blueASG') { blue_asg_driver }
         allow(CfDeployer::Driver::AutoScalingGroup).to receive(:new).with('AltgreenASG') { alt_green_asg_driver }
         allow(CfDeployer::Driver::AutoScalingGroup).to receive(:new).with('greenASG') { green_asg_driver }
+        allow(blue_stack).to receive(:resource_statuses) { asg_ids('blueASG', 'AltblueASG') }
         allow(alt_blue_asg_driver).to receive(:describe) {{desired: 1, min: 1, max: 2}}
         allow(alt_green_asg_driver).to receive(:describe) {{desired: 0, min: 0, max: 0}}
         allow(blue_asg_driver).to receive(:describe) {{desired: 1, min: 1, max: 2}}
@@ -345,6 +350,21 @@ describe 'Auto Scaling Group Swap Deployment Strategy' do
     end
   end
 
+  context '#cool_down_active_stack' do
+    it 'should cool down only those ASGs which actually exist' do
+      blue_stack.live!
+      green_stack.die!
+      allow(CfDeployer::Driver::AutoScalingGroup).to receive(:new).with('greenASG') { green_asg_driver }
+      allow(CfDeployer::Driver::AutoScalingGroup).to receive(:new).with('blueASG') { blue_asg_driver }
+      allow(green_asg_driver).to receive(:describe) { {desired: 0, min: 0, max: 0 } }
+      allow(blue_asg_driver).to receive(:describe) { {desired: 1, min: 1, max: 3 } }
+
+      strategy = CfDeployer::DeploymentStrategy.create(app, env, component, context)
+      expect(blue_asg_driver).to receive(:cool_down)
+      strategy.send(:cool_down_active_stack)
+    end
+  end
+
   describe '#asg_driver' do
     it 'returns the same driver for the same aws_group_name' do
       strategy = CfDeployer::DeploymentStrategy.create(app, env, component, context)
@@ -358,7 +378,6 @@ describe 'Auto Scaling Group Swap Deployment Strategy' do
   end
 
   context '#output_value' do
-
     it 'should get stack output if active stack exists' do
       blue_stack.live!
       green_stack.live!
@@ -383,17 +402,15 @@ describe 'Auto Scaling Group Swap Deployment Strategy' do
   end
 
   context '#status' do
-     before :each do
+    before :each do
       blue_stack.live!
       green_stack.live!
       allow(blue_stack).to receive(:status) { 'blue deployed' }
       allow(green_stack).to receive(:status) { 'green deployed' }
-      allow(blue_stack).to receive(:resource_statuses) { 'blue resources' }
-      allow(green_stack).to receive(:resource_statuses) { 'green resources' }
-      allow(CfDeployer::Driver::AutoScalingGroup).to receive(:new).with('greenASG') { green_asg_driver }
       allow(CfDeployer::Driver::AutoScalingGroup).to receive(:new).with('blueASG') { blue_asg_driver }
-      allow(green_asg_driver).to receive(:describe) {{desired: 0, min: 0, max: 0}}
+      allow(CfDeployer::Driver::AutoScalingGroup).to receive(:new).with('greenASG') { green_asg_driver }
       allow(blue_asg_driver).to receive(:describe) {{desired: 3, min: 1, max: 5}}
+      allow(green_asg_driver).to receive(:describe) {{desired: 0, min: 0, max: 0}}
       asg_swap = CfDeployer::DeploymentStrategy.create(app, env, component, context)
 
     end
@@ -401,14 +418,14 @@ describe 'Auto Scaling Group Swap Deployment Strategy' do
     it 'should get status for both green and blue stacks' do
       asg_swap = CfDeployer::DeploymentStrategy.create(app, env, component, context)
       expected_result = {
-        'BLUE' => {
-          :active => true,
-          :status => 'blue deployed'
-        },
-         'GREEN' => {
-          :active => false,
-          :status => 'green deployed'
-        }
+          'BLUE' => {
+              :active => true,
+              :status => 'blue deployed'
+          },
+          'GREEN' => {
+              :active => false,
+              :status => 'green deployed'
+          }
       }
       asg_swap.status.should eq(expected_result)
     end
@@ -416,18 +433,59 @@ describe 'Auto Scaling Group Swap Deployment Strategy' do
     it 'should get status for both green and blue stacks including resources info' do
       asg_swap = CfDeployer::DeploymentStrategy.create(app, env, component, context)
       expected_result = {
-        'BLUE' => {
-          :active => true,
-          :status => 'blue deployed',
-          :resources => 'blue resources'
-        },
-         'GREEN' => {
-          :active => false,
-          :status => 'green deployed',
-          :resources => 'green resources'
-        }
+          'BLUE' => {
+              :active => true,
+              :status => 'blue deployed',
+              :resources => {
+                  :asg_instances => {
+                      'blueASG' => nil
+                  }
+              }
+          },
+          'GREEN' => {
+              :active => false,
+              :status => 'green deployed',
+              :resources => {
+                  :asg_instances => {
+                      'greenASG' => nil
+                  }
+              }
+          }
       }
       asg_swap.status(true).should eq(expected_result)
+    end
+  end
+
+  context 'new ASG' do
+    let(:foo_asg_driver) { double('foo_asg_driver') }
+    let(:bar_asg_driver) { double('bar_asg_driver') }
+
+    before :each do
+      allow(foo_asg_driver).to receive(:describe) { {min: 1, desired: 2, max: 3} }
+      allow(bar_asg_driver).to receive(:describe) { {min: 0, desired: 0, max: 0} }
+    end
+
+    it 'should get active ASGs from CF stack' do
+      allow(CfDeployer::Driver::AutoScalingGroup).to receive(:new).with('foo') { foo_asg_driver }
+      allow(CfDeployer::Driver::AutoScalingGroup).to receive(:new).with('bar') { bar_asg_driver }
+      allow(blue_stack).to receive(:resource_statuses) { asg_ids('foo', 'bar') }
+
+      asg_swap = CfDeployer::DeploymentStrategy.create(app, env, component, context)
+      asg_swap.send(:get_active_asgs, blue_stack).should eq(['foo'])
+    end
+  end
+
+  context '#stack_active' do
+    it 'should consider a stack active if it has any active ASGs' do
+      allow(CfDeployer::Stack).to receive(:new).with('myapp-dev-worker-B', 'worker', context) { blue_stack }
+      allow(CfDeployer::Stack).to receive(:new).with('myapp-dev-worker-G', 'worker', context) { green_stack }
+      allow(CfDeployer::Driver::AutoScalingGroup).to receive(:new).with('greenASG') { green_asg_driver }
+      allow(CfDeployer::Driver::AutoScalingGroup).to receive(:new).with('blueASG') { blue_asg_driver }
+      allow(blue_asg_driver).to receive(:describe) { {min: 1, desired: 2, max: 3} }
+      allow(green_asg_driver).to receive(:describe) { {min: 0, desired: 0, max: 0} }
+
+      asg_swap = CfDeployer::DeploymentStrategy.create(app, env, component, context)
+      asg_swap.send(:stack_active?, blue_stack).should be(true)
     end
   end
 end

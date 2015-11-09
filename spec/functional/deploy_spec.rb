@@ -61,6 +61,8 @@ describe 'Deploy' do
       allow(CfDeployer::Stack).to receive(:new).with('cf-deployer-sample-asg-swap-dev-base', 'base', anything) { base_stack }
       allow(CfDeployer::Driver::AutoScalingGroup).to receive(:new).with('blueASG') { blue_asg_driver }
       allow(CfDeployer::Driver::AutoScalingGroup).to receive(:new).with('greenASG') { green_asg_driver }
+      allow(blue_stack).to receive(:resource_statuses) { asg_ids 'blueASG' }
+      allow(green_stack).to receive(:resource_statuses) { asg_ids 'greenASG' }
       allow(blue_asg_driver).to receive(:describe) {{desired: 0, min: 0, max: 0}}
       allow(green_asg_driver).to receive(:describe) {{desired: 2, min: 1, max: 5}}
       expect(blue_asg_driver).to receive(:warm_up).with(2)
