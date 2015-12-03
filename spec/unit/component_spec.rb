@@ -12,13 +12,17 @@ describe "component" do
             :'vpc-subnets' => {
               :component => 'base',
               :'output-key' => 'subnets'
+            },
+            :'nested-hash' => {
+              :foo => 'foo value',
+              :bar => 'bar value'
             }
            }
           }
     @base = CfDeployer::Component.new('myApp', 'uat', 'base', {})
     @db = CfDeployer::Component.new('myApp', 'uat', 'db', {})
 
-    @web = CfDeployer::Component.new('myApp', 'uat', 'web', @context)
+    @web = CfDeployer::Component.new('myApp', 'uat', 'component', @context)
     @web.dependencies << @base
     @web.dependencies << @db
     @base.children << @web
@@ -30,13 +34,39 @@ describe "component" do
     it 'should revolve settings from parent components if parent components has been deployed' do
       allow(@base).to receive(:exists?){ true }
       allow(@base).to receive(:output_value).with('subnets') { 'abcd1234, edfas1234' }
-      expect(CfDeployer::ConfigLoader).to receive(:component_json).with('web', @context)
+      expect(CfDeployer::ConfigLoader).to receive(:component_json).with('component', @context)
       @web.json
 
       expect(@context[:inputs][:'vpc-subnets']).to eq('abcd1234, edfas1234')
     end
-  end
 
+    it 'should not attempt to resolve settings from referenced component unless component is specified' do
+      expected = {
+          :foo => 'foo value',
+          :bar => 'bar value'
+      }
+      allow(@base).to receive(:output_value).with('subnets') { 'abcd1234, edfas1234' }
+      expect(CfDeployer::ConfigLoader).to receive(:component_json).with('component', @context)
+      @web.json
+
+      expect(@context[:inputs][:'nested-hash']).to eq(expected)
+    end
+
+    it 'should provide a descriptive error message when referenced component does not exist' do
+      context = {
+          :inputs => {
+              :some_key => {
+                  :component => 'blah',
+                  :'output-key' => 'referenced_key'
+              }
+          }
+      }
+      expected_message = "No component 'blah' found when attempting to derive input 'some_key'"
+
+      component = CfDeployer::Component.new('myApp', 'uat', 'component', context)
+      expect {component.json}.to raise_error(expected_message)
+    end
+  end
 
   it "should destroy component" do
     expect(@strategy).to receive(:destroy)
@@ -72,7 +102,7 @@ describe "component" do
   end
 
   it "should find direct dependencies" do
-    web = CfDeployer::Component.new('myApp', 'uat', 'web', {})
+    web = CfDeployer::Component.new('myApp', 'uat', 'component', {})
     base = CfDeployer::Component.new('myApp', 'uat', 'base', {})
     web.dependencies << base
 
@@ -80,7 +110,7 @@ describe "component" do
   end
 
   it "should find transitive dependencies" do
-    web = CfDeployer::Component.new('myApp', 'uat', 'web', {})
+    web = CfDeployer::Component.new('myApp', 'uat', 'component', {})
     haproxy = CfDeployer::Component.new('myApp', 'uat', 'haproxy', {})
     base = CfDeployer::Component.new('myApp', 'uat', 'base', {})
 
@@ -91,7 +121,7 @@ describe "component" do
   end
 
   it "should find cyclic dependency" do
-    web = CfDeployer::Component.new('myApp', 'uat', 'web', {})
+    web = CfDeployer::Component.new('myApp', 'uat', 'component', {})
     haproxy = CfDeployer::Component.new('myApp', 'uat', 'haproxy', {})
     base = CfDeployer::Component.new('myApp', 'uat', 'base', {})
     foo = CfDeployer::Component.new('myApp', 'uat', 'foo', {})
@@ -127,7 +157,7 @@ describe "component" do
       it 'should raise an error that there is no stack for the component' do
         allow(@strategy).to receive(:exists?) { false }
         expect(@strategy).not_to receive(:switch)
-        expect { @web.switch }.to raise_error 'No stack exists for component: web'
+        expect { @web.switch }.to raise_error 'No stack exists for component: component'
       end
     end
 

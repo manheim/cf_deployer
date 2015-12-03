@@ -100,8 +100,9 @@ module CfDeployer
 
     def resolve_settings
       inputs.each do |key, value|
-        if(value.is_a? Hash)
+        if(value.is_a?(Hash) && value.key?(:component))
           dependency = @dependencies.find { |d| d.name == value[:component] }
+          raise "No component '#{value[:component]}' found when attempting to derive input '#{key}'" unless dependency
           output_key = value[:'output-key']
           inputs[key] = dependency.output_value(output_key)
         end
