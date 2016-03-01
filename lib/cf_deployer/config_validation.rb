@@ -21,6 +21,14 @@ module CfDeployer
 
     private
 
+    def check_stack_policy(component)
+      if (
+          component[:settings][:'override-stack-policy'] == true &&
+          component[:settings][:'override-stack-policy-filename'].nil?
+          )
+          @errors.push("if 'override-stack-policy' is true, then there must be a 'override-stack-policy-filename'")
+      end
+    end
 
     def check_asg_name_output(component)
       component[:settings][:'auto-scaling-group-name-output'] ||= []
@@ -58,6 +66,7 @@ module CfDeployer
         check_asg_name_output(component)
         check_hooks(component)
         check_component_options(component_name, component)
+        check_stack_policy(component)
       end
     end
 

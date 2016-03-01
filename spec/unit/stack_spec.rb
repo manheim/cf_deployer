@@ -1,33 +1,77 @@
 require 'spec_helper'
 
 describe CfDeployer::Stack do
-    before do
-      @cf_driver = double CfDeployer::Driver::CloudFormation
-      @stack = CfDeployer::Stack.new('test', 'web', {:cf_driver => @cf_driver})
-    end
+  before do
+    @cf_driver = double CfDeployer::Driver::CloudFormation
+    @stack = CfDeployer::Stack.new('test', 'web', {:cf_driver => @cf_driver})
+    @config = {
+      :inputs => { :foo => :bar, :goo => :hoo },
+      :tags => { :app => 'app1', :env => 'dev'},
+      :defined_parameters => { :foo => 'bar' },
+      :notify => ['topic1_arn', 'topic2_arn'],
+      :cf_driver => @cf_driver,
+      :settings => {
+        :'create-stack-policy-filename' => 'create-policy',
+        :'override-stack-policy-filename' => 'override-policy',
+        :'override-stack-policy' => false
+      }
+    }
+  end
 
   context '#deploy' do
-    it 'should call CfDeployer::ConfigLoader.component_json to get the JSON for the stack' do
-      config = { :inputs => { :foo => :bar, :goo => :hoo },
-                 :tags => { :app => 'app1', :env => 'dev'},
-                 :defined_parameters => { :foo => 'bar' },
-                 :notify => ['topic1_arn', 'topic2_arn'],
-                 :cf_driver => @cf_driver }
-      template = { :resourses => {}}
-      allow(CfDeployer::ConfigLoader).to receive(:component_json).with('web', config).and_return(template)
+    it 'creates a stack, when it doesnt exist' do
+      template = { :resources => {}}
+      create_policy = { :Statement => [] }
+      allow(CfDeployer::ConfigLoader).to receive(:erb_to_json).with('web', @config).and_return(template)
+      allow(CfDeployer::ConfigLoader).to receive(:erb_to_json).with('create-policy', @config).and_return(create_policy)
       allow(@cf_driver).to receive(:stack_exists?) { false }
       allow(@cf_driver).to receive(:stack_status) { :create_complete }
-      expected_opt = { :disable_rollback => true,
+      expected_opt = {
+        :disable_rollback => true,
         :capabilities => [],
         :notify => ['topic1_arn', 'topic2_arn'],
         :tags => [{'Key' => 'app', 'Value' => 'app1'},
                   {'Key' => 'env', 'Value' => 'dev'}],
-        :parameters => {:foo => 'bar'}
+        :parameters => {:foo => 'bar'},
+        :stack_policy_body => {:Statement=>[]}
       }
       expect(@cf_driver).to receive(:create_stack).with(template, expected_opt)
-      stack = CfDeployer::Stack.new('test','web', config)
+      stack = CfDeployer::Stack.new('test','web', @config)
       stack.deploy
     end
+
+    it 'updates a stack, when it exists' do
+      template = { :resources => {}}
+      allow(CfDeployer::ConfigLoader).to receive(:erb_to_json).with('web', @config).and_return(template)
+      allow(@cf_driver).to receive(:stack_exists?) { true }
+      allow(@cf_driver).to receive(:stack_status) { :create_complete }
+      expected_opt = {
+        :capabilities => [],
+        :parameters => {:foo => 'bar'}
+      }
+      expect(@cf_driver).to receive(:update_stack).with(template, expected_opt)
+      stack = CfDeployer::Stack.new('test','web', @config)
+      stack.deploy
+    end
+
+    it 'updates a stack using the override policy, when defined' do
+      template = { :resources => {}}
+      override_policy = { :Statement => [] }
+      @config[:settings][:'override-stack-policy'] = true
+      allow(CfDeployer::ConfigLoader).to receive(:erb_to_json).with('web', @config).and_return(template)
+      allow(CfDeployer::ConfigLoader).to receive(:erb_to_json).with('override-policy', @config).and_return(template)
+      allow(@cf_driver).to receive(:stack_exists?) { true }
+      allow(@cf_driver).to receive(:stack_status) { :create_complete }
+      expected_opt = {
+        :capabilities => [],
+        :parameters => {:foo => 'bar'},
+        :stack_policy_during_update_body => {:resources => {}}
+      }
+      expect(@cf_driver).to receive(:update_stack).with(template, expected_opt)
+      stack = CfDeployer::Stack.new('test','web', @config)
+      stack.deploy
+    end
+
   end
 
   context '#parameters' do

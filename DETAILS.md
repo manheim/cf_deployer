@@ -82,7 +82,16 @@ Used by the gem for blue/green deployments and naming conventions
     * keep-previous-stack (True/False: for Cname-Swap and Auto Scaling Group Swap, previous stack will be kept after new stack is created by default. Set it to false to delete the previous stack)
     * raise-error-for-unused-inputs (True/False: it is false by default. If it is set to true, errors will be thrown if there are any inputs which are not used as parameters of CloudFormation json templates. If it is set to false or the setting does not exist, warnings will be printed in the console if there are un-used inputs.)
     * auto-scaling-group-name-output
-  * **For Components Using the Cname-Swap Deployment Strategy**
+    * create-stack-policy-filename: the name of the json file (w/o the json
+      extension) holding the stack policy to be used during the creation of the
+      component stack.  the file is assumed to be relative to the config
+      directory.
+    * override-stack-policy-filename: the name of the json file (w/o the json
+      extension) holding the stack policy to be used during updates of component
+      stacks when the `override-stack-policy` setting is true. the file is
+      assumed to be relative to the config directory.
+    * override-stack-policy: (true/false) whether to use the override policy
+* **For Components Using the Cname-Swap Deployment Strategy**
     * dns-fqdn (DNS record set name, for example, myApp.api.abc.com)
     * dns-zone (DNS hosted zone, for example, api.abc.com)
     * elb-name-output

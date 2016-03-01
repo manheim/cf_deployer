@@ -17,13 +17,22 @@ module CfDeployer
 
     def deploy
       config_dir = @context[:config_dir]
-      template = CfDeployer::ConfigLoader.component_json(@component, @context)
+      template = CfDeployer::ConfigLoader.erb_to_json(@component, @context)
       capabilities = @context[:capabilities] || []
       notify = @context[:notify] || []
       tags = @context[:tags] || {}
       params = to_str(@context[:inputs].select{|key, value| @context[:defined_parameters].keys.include?(key)})
       CfDeployer::Driver::DryRun.guard "Skipping deploy" do
-        exists? ? update_stack(template, params, capabilities, tags) : create_stack(template, params, capabilities, tags, notify)
+        if exists?
+          override_policy_json = nil
+          if @context[:settings][:'override-stack-policy'] == true
+            override_policy_json = CfDeployer::ConfigLoader.erb_to_json(@context[:settings][:'override-stack-policy-filename'], @context)
+          end
+          update_stack(template, params, capabilities, tags, override_policy_json)
+        else
+          create_policy_json = CfDeployer::ConfigLoader.erb_to_json(@context[:settings][:'create-stack-policy-filename'], @context)
+          create_stack(template, params, capabilities, tags, notify, create_policy_json)
+        end
       end
     end
 
@@ -106,22 +115,32 @@ module CfDeployer
       hash.each { |k,v| hash[k] = v.to_s }
     end
 
-    def update_stack(template, params, capabilities, tags)
+    def update_stack(template, params, capabilities, tags, override_policy_json)
       Log.info "Updating stack #{@stack_name}..."
-      @cf_driver.update_stack template,
-                              :capabilities => capabilities,
-                              :parameters => params
+      args = {
+        :capabilities => capabilities,
+        :parameters => params
+      }
+      unless override_policy_json.nil?
+        args[:stack_policy_during_update_body] = override_policy_json
+      end
+      @cf_driver.update_stack(template, args)
       wait_for_stack_op_terminate
     end
 
-    def create_stack(template, params, capabilities, tags, notify)
+    def create_stack(template, params, capabilities, tags, notify, create_policy_json)
       Log.info "Creating stack #{@stack_name}..."
-      @cf_driver.create_stack template,
-                              :disable_rollback => true,
-                              :capabilities => capabilities,
-                              :notify => notify,
-                              :tags => reformat_tags(tags),
-                              :parameters => params
+      args = {
+        :disable_rollback => true,
+        :capabilities => capabilities,
+        :notify => notify,
+        :tags => reformat_tags(tags),
+        :parameters => params
+      }
+      unless create_policy_json.nil?
+        args[:stack_policy_body] = create_policy_json
+      end
+      @cf_driver.create_stack(template, args)
       wait_for_stack_op_terminate
     end
 

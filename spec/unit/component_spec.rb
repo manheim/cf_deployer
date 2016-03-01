@@ -34,7 +34,7 @@ describe "component" do
     it 'should revolve settings from parent components if parent components has been deployed' do
       allow(@base).to receive(:exists?){ true }
       allow(@base).to receive(:output_value).with('subnets') { 'abcd1234, edfas1234' }
-      expect(CfDeployer::ConfigLoader).to receive(:component_json).with('component', @context)
+      expect(CfDeployer::ConfigLoader).to receive(:erb_to_json).with('component', @context)
       @web.json
 
       expect(@context[:inputs][:'vpc-subnets']).to eq('abcd1234, edfas1234')
@@ -46,7 +46,7 @@ describe "component" do
           :bar => 'bar value'
       }
       allow(@base).to receive(:output_value).with('subnets') { 'abcd1234, edfas1234' }
-      expect(CfDeployer::ConfigLoader).to receive(:component_json).with('component', @context)
+      expect(CfDeployer::ConfigLoader).to receive(:erb_to_json).with('component', @context)
       @web.json
 
       expect(@context[:inputs][:'nested-hash']).to eq(expected)

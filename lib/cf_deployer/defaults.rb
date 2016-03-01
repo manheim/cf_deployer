@@ -6,5 +6,8 @@ module CfDeployer
     DNSDriver = 'CfDeployer::Driver::Route53'
     RaiseErrorForUnusedInputs = false
     KeepPreviousStack = true
+    CreateStackPolicyFileName = nil
+    OverrideStackPolicyFileName = nil
+    OverrideStackPolicy = false
   end
 end

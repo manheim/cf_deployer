@@ -1,10 +1,10 @@
 module CfDeployer
   class ConfigLoader
 
-    def self.component_json component, config
-      json_file = File.join(config[:config_dir], "#{component}.json")
+    def self.erb_to_json filename, config
+      json_file = File.join(config[:config_dir], "#{filename}.json")
       raise ApplicationError.new("#{json_file} is missing") unless File.exists?(json_file)
-      CfDeployer::Log.info "ERBing JSON for #{component}"
+      CfDeployer::Log.info "ERBing JSON for #{filename}"
       ERB.new(File.read(json_file)).result(binding)
     rescue RuntimeError,TypeError,NoMethodError => e
       self.new.send :error_document, File.read(json_file)
@@ -112,6 +112,15 @@ module CfDeployer
         if component[:settings][:'keep-previous-stack'] == nil
           component[:settings][:'keep-previous-stack'] = Defaults::KeepPreviousStack
         end
+        component[:settings][:'create-stack-policy-filename'] ||= Defaults::CreateStackPolicyFileName
+
+        # although we could combine these 2 properties, and have the
+        # OverrideStackPolicyFileName being nil imply false for
+        # OverrideStackPolicy, we want to be able to define the override policy
+        # in the project and only turn it on occasionally turn it on via
+        # --settings=override-stack-policy:true
+        component[:settings][:'override-stack-policy-filename'] ||= Defaults::OverrideStackPolicyFileName
+        component[:settings][:'override-stack-policy'] ||= Defaults::OverrideStackPolicy
       end
     end
 
@@ -131,7 +140,7 @@ module CfDeployer
         end
       end
 
-      json_content = self.class.component_json component.to_s, config
+      json_content = self.class.erb_to_json component.to_s, config
       CfDeployer::Log.info "Parsing JSON for #{component}"
       begin
         JSON.load json_content
