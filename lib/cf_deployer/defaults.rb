@@ -8,6 +8,5 @@ module CfDeployer
     KeepPreviousStack = true
     CreateStackPolicyFileName = nil
     OverrideStackPolicyFileName = nil
-    OverrideStackPolicy = false
   end
 end

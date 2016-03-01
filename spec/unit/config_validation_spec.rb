@@ -105,21 +105,6 @@ describe "Config Validation" do
     expect{CfDeployer::ConfigValidation.new.validate(config)}.to raise_error("File '../samples/something.rb' does not exist, which is required by hook 'before-destroy'")
   end
 
-  it "should get error if override-stack-policy is true, but no policy file is specified" do
-    config = {
-      :targets => ['base'],
-      :application => 'myApp',
-      :components =>{
-        :base => {
-          :settings => {
-            :'override-stack-policy' => true
-          }
-        }
-      },
-    }
-    expect{CfDeployer::ConfigValidation.new.validate(config)}.to raise_error("if 'override-stack-policy' is true, then there must be a 'override-stack-policy-filename'")
-  end
-
   it "should get error if any CF parameters do not have co-responding settings" do
     config = {
       :targets => ['base'],

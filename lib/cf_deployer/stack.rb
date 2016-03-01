@@ -25,7 +25,7 @@ module CfDeployer
       CfDeployer::Driver::DryRun.guard "Skipping deploy" do
         if exists?
           override_policy_json = nil
-          if @context[:settings][:'override-stack-policy'] == true
+          unless @context[:settings][:'override-stack-policy-filename'].nil?
             override_policy_json = CfDeployer::ConfigLoader.erb_to_json(@context[:settings][:'override-stack-policy-filename'], @context)
           end
           update_stack(template, params, capabilities, tags, override_policy_json)

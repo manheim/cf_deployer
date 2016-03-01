@@ -12,8 +12,6 @@ describe CfDeployer::Stack do
       :cf_driver => @cf_driver,
       :settings => {
         :'create-stack-policy-filename' => 'create-policy',
-        :'override-stack-policy-filename' => 'override-policy',
-        :'override-stack-policy' => false
       }
     }
   end
@@ -33,7 +31,7 @@ describe CfDeployer::Stack do
         :tags => [{'Key' => 'app', 'Value' => 'app1'},
                   {'Key' => 'env', 'Value' => 'dev'}],
         :parameters => {:foo => 'bar'},
-        :stack_policy_body => {:Statement=>[]}
+        :stack_policy_body => create_policy
       }
       expect(@cf_driver).to receive(:create_stack).with(template, expected_opt)
       stack = CfDeployer::Stack.new('test','web', @config)
@@ -57,15 +55,15 @@ describe CfDeployer::Stack do
     it 'updates a stack using the override policy, when defined' do
       template = { :resources => {}}
       override_policy = { :Statement => [] }
-      @config[:settings][:'override-stack-policy'] = true
+      @config[:settings][:'override-stack-policy-filename'] = 'override-policy'
       allow(CfDeployer::ConfigLoader).to receive(:erb_to_json).with('web', @config).and_return(template)
-      allow(CfDeployer::ConfigLoader).to receive(:erb_to_json).with('override-policy', @config).and_return(template)
+      allow(CfDeployer::ConfigLoader).to receive(:erb_to_json).with('override-policy', @config).and_return(override_policy)
       allow(@cf_driver).to receive(:stack_exists?) { true }
       allow(@cf_driver).to receive(:stack_status) { :create_complete }
       expected_opt = {
         :capabilities => [],
         :parameters => {:foo => 'bar'},
-        :stack_policy_during_update_body => {:resources => {}}
+        :stack_policy_during_update_body => override_policy
       }
       expect(@cf_driver).to receive(:update_stack).with(template, expected_opt)
       stack = CfDeployer::Stack.new('test','web', @config)

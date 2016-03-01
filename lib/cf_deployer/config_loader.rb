@@ -113,14 +113,7 @@ module CfDeployer
           component[:settings][:'keep-previous-stack'] = Defaults::KeepPreviousStack
         end
         component[:settings][:'create-stack-policy-filename'] ||= Defaults::CreateStackPolicyFileName
-
-        # although we could combine these 2 properties, and have the
-        # OverrideStackPolicyFileName being nil imply false for
-        # OverrideStackPolicy, we want to be able to define the override policy
-        # in the project and only turn it on occasionally turn it on via
-        # --settings=override-stack-policy:true
         component[:settings][:'override-stack-policy-filename'] ||= Defaults::OverrideStackPolicyFileName
-        component[:settings][:'override-stack-policy'] ||= Defaults::OverrideStackPolicy
       end
     end
 

@@ -87,10 +87,9 @@ Used by the gem for blue/green deployments and naming conventions
       component stack.  the file is assumed to be relative to the config
       directory.
     * override-stack-policy-filename: the name of the json file (w/o the json
-      extension) holding the stack policy to be used during updates of component
-      stacks when the `override-stack-policy` setting is true. the file is
-      assumed to be relative to the config directory.
-    * override-stack-policy: (true/false) whether to use the override policy
+      extension) holding the stack policy to be used as an override policy
+      during updates of component stacks. the file is assumed to be relative to
+      the config directory.
 * **For Components Using the Cname-Swap Deployment Strategy**
     * dns-fqdn (DNS record set name, for example, myApp.api.abc.com)
     * dns-zone (DNS hosted zone, for example, api.abc.com)
