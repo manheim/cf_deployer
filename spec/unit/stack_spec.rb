@@ -11,7 +11,8 @@ describe CfDeployer::Stack do
       :notify => ['topic1_arn', 'topic2_arn'],
       :cf_driver => @cf_driver,
       :settings => {
-        :'create-stack-policy-filename' => 'create-policy',
+        'create-stack-policy-filename' => nil,
+        'override-stack-policy-filename' => nil
       }
     }
   end
@@ -19,7 +20,26 @@ describe CfDeployer::Stack do
   context '#deploy' do
     it 'creates a stack, when it doesnt exist' do
       template = { :resources => {}}
+      allow(CfDeployer::ConfigLoader).to receive(:erb_to_json).with('web', @config).and_return(template)
+      allow(@cf_driver).to receive(:stack_exists?) { false }
+      allow(@cf_driver).to receive(:stack_status) { :create_complete }
+      expected_opt = {
+        :disable_rollback => true,
+        :capabilities => [],
+        :notify => ['topic1_arn', 'topic2_arn'],
+        :tags => [{'Key' => 'app', 'Value' => 'app1'},
+                  {'Key' => 'env', 'Value' => 'dev'}],
+        :parameters => {:foo => 'bar'}
+      }
+      expect(@cf_driver).to receive(:create_stack).with(template, expected_opt)
+      stack = CfDeployer::Stack.new('test','web', @config)
+      stack.deploy
+    end
+
+    it 'creates a stack using a policy when defined' do
+      template = { :resources => {}}
       create_policy = { :Statement => [] }
+      @config[:settings][:'create-stack-policy-filename'] = 'create-policy'
       allow(CfDeployer::ConfigLoader).to receive(:erb_to_json).with('web', @config).and_return(template)
       allow(CfDeployer::ConfigLoader).to receive(:erb_to_json).with('create-policy', @config).and_return(create_policy)
       allow(@cf_driver).to receive(:stack_exists?) { false }

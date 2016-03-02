@@ -30,7 +30,10 @@ module CfDeployer
           end
           update_stack(template, params, capabilities, tags, override_policy_json)
         else
-          create_policy_json = CfDeployer::ConfigLoader.erb_to_json(@context[:settings][:'create-stack-policy-filename'], @context)
+          create_policy_json = nil
+          unless @context[:settings][:'create-stack-policy-filename'].nil?
+            create_policy_json = CfDeployer::ConfigLoader.erb_to_json(@context[:settings][:'create-stack-policy-filename'], @context)
+          end
           create_stack(template, params, capabilities, tags, notify, create_policy_json)
         end
       end
