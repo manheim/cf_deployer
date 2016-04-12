@@ -8,6 +8,8 @@ rvm:
   - jruby-19mode
   - jruby-9.0.1.0
   - rbx-2
+before_install:
+  - gem install bundler
 matrix:
   allow_failures:
     - rvm: ruby-head

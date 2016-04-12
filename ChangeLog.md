@@ -52,3 +52,4 @@ version 1.3.9
 
 version 1.4.0
   - Added support for stack policies (https://github.com/manheim/cf_deployer/pull/40)
+  - Fix broken Travis builds with newer version of bundler (https://github.com/manheim/cf_deployer/pull/42)
