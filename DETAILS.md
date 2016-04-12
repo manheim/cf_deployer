@@ -84,14 +84,17 @@ Used by the gem for blue/green deployments and naming conventions
     * auto-scaling-group-name-output
     * create-stack-policy: The name of the stack policy to be used during the
       creation of the component stack.  The location of the policy json file is
-      assumed to be "config/{create-stack-policy}.json".
+      assumed to be "config/{create-stack-policy}.json". The intended use of
+      this setting is to make it persistent by placing it in your
+      `cf_deployer.yml` file.
     * override-stack-policy: The name of the override stack policy to be used
-      during an update of the component stack.  The location of the policy
-      json file is assumed to be "config/{override-stack-policy}.json".  Since
-      the override policy is only used occassionally, the most likely use of
-      this setting will be via the `--settings` cli flag, v.s. being
-      persistently set in the config file.
-* **For Components Using the Cname-Swap Deployment Strategy**
+      during an update of the component stack.  The location of the policy json
+      file is assumed to be "config/{override-stack-policy}.json".  Since the
+      override policy is only used occasionally to override the
+      `create-stack-policy`, the intended use of this setting is for it to be
+      called via the `--settings` cli flag, v.s. being persistently set in the
+      config file.
+  * **For Components Using the Cname-Swap Deployment Strategy**
     * dns-fqdn (DNS record set name, for example, myApp.api.abc.com)
     * dns-zone (DNS hosted zone, for example, api.abc.com)
     * elb-name-output
