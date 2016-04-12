@@ -51,5 +51,6 @@ version 1.3.9
   - Allow new ASGs to be added to template (See: https://github.com/manheim/cf_deployer/issues/31)
 
 version 1.4.0
+  - Merge settings from parent component when given (https://github.com/manheim/cf_deployer/pull/37)
   - Added support for stack policies (https://github.com/manheim/cf_deployer/pull/40)
   - Fix broken Travis builds with newer version of bundler (https://github.com/manheim/cf_deployer/pull/42)
