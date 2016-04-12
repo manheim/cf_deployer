@@ -86,7 +86,7 @@ Used by the gem for blue/green deployments and naming conventions
       creation of the component stack.  The location of the policy json file is
       assumed to be "config/{create-stack-policy}.json".
     * override-stack-policy: The name of the override stack policy to be used
-      during the creation of the component stack.  The location of the policy
+      during an update of the component stack.  The location of the policy
       json file is assumed to be "config/{override-stack-policy}.json".  Since
       the override policy is only used occassionally, the most likely use of
       this setting will be via the `--settings` cli flag, v.s. being
