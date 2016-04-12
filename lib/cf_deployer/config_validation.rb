@@ -21,7 +21,6 @@ module CfDeployer
 
     private
 
-
     def check_asg_name_output(component)
       component[:settings][:'auto-scaling-group-name-output'] ||= []
       outputs = component[:settings][:'auto-scaling-group-name-output'].map { |name| name.to_sym }

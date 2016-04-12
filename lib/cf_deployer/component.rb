@@ -35,7 +35,7 @@ module CfDeployer
     def json
       resolve_settings
       puts "#{name} json template:"
-      puts ConfigLoader.component_json(name, @context)
+      puts ConfigLoader.erb_to_json(name, @context)
     end
 
     def diff
@@ -43,7 +43,7 @@ module CfDeployer
       current_json = strategy.active_template
       if current_json
         puts "#{name} json template diff:"
-        new_json = ConfigLoader.component_json(name, @context)
+        new_json = ConfigLoader.erb_to_json(name, @context)
         Diffy::Diff.default_format = :color
         puts Diffy::Diff.new( current_json, new_json )
       else

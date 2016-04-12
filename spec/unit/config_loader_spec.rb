@@ -329,13 +329,13 @@ environments:
 
   it "should ERB the component JSON and make the parsed template available" do
     config =  CfDeployer::ConfigLoader.new.load(:'config-file' => @config_file, :environment => 'DrWho')
-    CfDeployer::ConfigLoader.component_json('json-with-erb', config[:components][:'json-with-erb']).should include('DrWho')
+    CfDeployer::ConfigLoader.erb_to_json('json-with-erb', config[:components][:'json-with-erb']).should include('DrWho')
   end
 
   it 'should use error_document to show the broken document when parsing broken ERB' do
     config = { :config_dir => File.dirname(@config_file) }
     CfDeployer::ConfigLoader.any_instance.should_receive(:error_document)
-    expect { CfDeployer::ConfigLoader.component_json('broken_erb', config) }.to raise_error
+    expect { CfDeployer::ConfigLoader.erb_to_json('broken_erb', config) }.to raise_error
   end
 
   it 'should use error_document to show the broken document when parsing broken json' do
