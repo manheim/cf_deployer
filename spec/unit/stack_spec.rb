@@ -11,8 +11,8 @@ describe CfDeployer::Stack do
       :notify => ['topic1_arn', 'topic2_arn'],
       :cf_driver => @cf_driver,
       :settings => {
-        'create-stack-policy-filename' => nil,
-        'override-stack-policy-filename' => nil
+        'create-stack-policy' => nil,
+        'override-stack-policy' => nil
       }
     }
   end
@@ -39,7 +39,7 @@ describe CfDeployer::Stack do
     it 'creates a stack using a policy when defined' do
       template = { :resources => {}}
       create_policy = { :Statement => [] }
-      @config[:settings][:'create-stack-policy-filename'] = 'create-policy'
+      @config[:settings][:'create-stack-policy'] = 'create-policy'
       allow(CfDeployer::ConfigLoader).to receive(:erb_to_json).with('web', @config).and_return(template)
       allow(CfDeployer::ConfigLoader).to receive(:erb_to_json).with('create-policy', @config).and_return(create_policy)
       allow(@cf_driver).to receive(:stack_exists?) { false }
@@ -75,7 +75,7 @@ describe CfDeployer::Stack do
     it 'updates a stack using the override policy, when defined' do
       template = { :resources => {}}
       override_policy = { :Statement => [] }
-      @config[:settings][:'override-stack-policy-filename'] = 'override-policy'
+      @config[:settings][:'override-stack-policy'] = 'override-policy'
       allow(CfDeployer::ConfigLoader).to receive(:erb_to_json).with('web', @config).and_return(template)
       allow(CfDeployer::ConfigLoader).to receive(:erb_to_json).with('override-policy', @config).and_return(override_policy)
       allow(@cf_driver).to receive(:stack_exists?) { true }

@@ -112,8 +112,8 @@ module CfDeployer
         if component[:settings][:'keep-previous-stack'] == nil
           component[:settings][:'keep-previous-stack'] = Defaults::KeepPreviousStack
         end
-        component[:settings][:'create-stack-policy-filename'] ||= Defaults::CreateStackPolicyFileName
-        component[:settings][:'override-stack-policy-filename'] ||= Defaults::OverrideStackPolicyFileName
+        component[:settings][:'create-stack-policy'] ||= Defaults::CreateStackPolicy
+        component[:settings][:'override-stack-policy'] ||= Defaults::OverrideStackPolicy
       end
     end
 
