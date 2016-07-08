@@ -102,6 +102,20 @@ describe CfDeployer::Stack do
       stack.deploy
     end
 
+    it 'does not fail if deployment caused no updates, and stack was already in a rollback state' do
+      template = { :resources => {}}
+      allow(CfDeployer::ConfigLoader).to receive(:erb_to_json).with('web', @config).and_return(template)
+      allow(@cf_driver).to receive(:stack_exists?) { true }
+      allow(@cf_driver).to receive(:stack_status) { :update_rollback_complete }
+      expected_opt = {
+        :capabilities => [],
+        :parameters => {:foo => 'bar'}
+      }
+      expect(@cf_driver).to receive(:update_stack).with(template, expected_opt).and_return(false)
+      stack = CfDeployer::Stack.new('test','web', @config)
+      stack.deploy
+    end
+
     it 'updates a stack using the override policy, when defined' do
       template = { :resources => {}}
       override_policy = { :Statement => [] }
