@@ -127,8 +127,8 @@ module CfDeployer
       unless override_policy_json.nil?
         args[:stack_policy_during_update_body] = override_policy_json
       end
-      @cf_driver.update_stack(template, args)
-      wait_for_stack_op_terminate
+      stack_updated = @cf_driver.update_stack(template, args)
+      wait_for_stack_op_terminate if stack_updated
     end
 
     def create_stack(template, params, capabilities, tags, notify, create_policy_json)

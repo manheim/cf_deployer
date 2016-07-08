@@ -72,6 +72,36 @@ describe CfDeployer::Stack do
       stack.deploy
     end
 
+    it 'waits for result when stack is updated' do
+      template = { :resources => {}}
+      allow(CfDeployer::ConfigLoader).to receive(:erb_to_json).with('web', @config).and_return(template)
+      allow(@cf_driver).to receive(:stack_exists?) { true }
+      allow(@cf_driver).to receive(:stack_status) { :create_complete }
+      expected_opt = {
+        :capabilities => [],
+        :parameters => {:foo => 'bar'}
+      }
+      expect(@cf_driver).to receive(:update_stack).with(template, expected_opt).and_return(true)
+      stack = CfDeployer::Stack.new('test','web', @config)
+      expect(stack).to receive(:wait_for_stack_op_terminate)
+      stack.deploy
+    end
+
+    it 'does not wait for result when stack is not updated' do
+      template = { :resources => {}}
+      allow(CfDeployer::ConfigLoader).to receive(:erb_to_json).with('web', @config).and_return(template)
+      allow(@cf_driver).to receive(:stack_exists?) { true }
+      allow(@cf_driver).to receive(:stack_status) { :create_complete }
+      expected_opt = {
+        :capabilities => [],
+        :parameters => {:foo => 'bar'}
+      }
+      expect(@cf_driver).to receive(:update_stack).with(template, expected_opt).and_return(false)
+      stack = CfDeployer::Stack.new('test','web', @config)
+      expect(stack).to_not receive(:wait_for_stack_op_terminate)
+      stack.deploy
+    end
+
     it 'updates a stack using the override policy, when defined' do
       template = { :resources => {}}
       override_policy = { :Statement => [] }
