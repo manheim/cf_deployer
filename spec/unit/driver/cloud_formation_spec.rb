@@ -42,6 +42,54 @@ describe 'CloudFormation' do
     CfDeployer::Driver::CloudFormation.new('testStack').parameters.should eq(parameters)
   end
 
+  context 'update_stack' do
+    it 'skips the stack update if dry run is enabled' do
+      cloud_formation = CfDeployer::Driver::CloudFormation.new 'my_stack'
+      expect(cloud_formation).to receive(:aws_stack).never
+
+      CfDeployer::Driver::DryRun.enable_for do
+        cloud_formation.update_stack :template, {}
+      end
+    end
+
+    it 'returns false if no updates were performed (because of dry run)' do
+      cloud_formation = CfDeployer::Driver::CloudFormation.new 'my_stack'
+      result = nil
+
+      CfDeployer::Driver::DryRun.enable_for do
+        result = cloud_formation.update_stack :template, {}
+      end
+
+      expect(result).to be_false
+    end
+
+    it 'returns false if no updates were performed (because no difference in template)' do
+      cloud_formation = CfDeployer::Driver::CloudFormation.new 'my_stack'
+      expect(cloud_formation).to receive(:aws_stack).and_raise(AWS::CloudFormation::Errors::ValidationError.new('No updates are to be performed'))
+      result = nil
+
+      CfDeployer::Driver::DryRun.disable_for do
+        result = cloud_formation.update_stack :template, {}
+      end
+
+      expect(result).to be_false
+    end
+
+    it 'returns true when updates are performed' do
+      cloud_formation = CfDeployer::Driver::CloudFormation.new 'my_stack'
+      aws_stack = double(:update => :did_something)
+      expect(cloud_formation).to receive(:aws_stack).and_return aws_stack
+      result = nil
+
+      CfDeployer::Driver::DryRun.disable_for do
+        result = cloud_formation.update_stack :template, {}
+      end
+
+      expect(result).to be_true
+    end
+
+  end
+
   context 'resource_statuses' do
     it 'should get resource statuses' do
       expected = {

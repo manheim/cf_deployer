@@ -3,9 +3,9 @@ module CfDeployer
   end
 
   class Stack
-    SUCCESS_STATS = [:create_complete, :update_complete, :update_rollback_complete, :delete_complete]
+    SUCCESS_STATS = [:create_complete, :update_complete, :delete_complete]
     READY_STATS = SUCCESS_STATS - [:delete_complete]
-    FAILED_STATS = [:create_failed, :update_failed, :delete_failed]
+    FAILED_STATS = [:create_failed, :update_failed, :delete_failed, :update_rollback_complete]
 
 
     def initialize(stack_name, component, context)
@@ -127,8 +127,8 @@ module CfDeployer
       unless override_policy_json.nil?
         args[:stack_policy_during_update_body] = override_policy_json
       end
-      @cf_driver.update_stack(template, args)
-      wait_for_stack_op_terminate
+      stack_updated = @cf_driver.update_stack(template, args)
+      wait_for_stack_op_terminate if stack_updated
     end
 
     def create_stack(template, params, capabilities, tags, notify, create_policy_json)
