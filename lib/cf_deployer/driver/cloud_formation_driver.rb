@@ -21,13 +21,17 @@ module CfDeployer
           CfDeployer::Driver::DryRun.guard "Skipping update_stack" do
             aws_stack.update opts.merge(:template => template)
           end
+
         rescue AWS::CloudFormation::Errors::ValidationError => e
           if e.message =~ /No updates are to be performed/
             Log.info e.message
+            return false
           else
             raise
           end
         end
+
+        return !CfDeployer::Driver::DryRun.enabled?
       end
 
       def stack_status

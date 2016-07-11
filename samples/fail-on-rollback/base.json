@@ -1,0 +1,46 @@
+{
+  "AWSTemplateFormatVersion" : "2010-09-09",
+
+  "Description" : "CfDeployer FailOnRollback Example",
+
+  "Parameters": {
+    "WebServerPort": {
+      "Description": "TCP/IP port of the web server",
+      "Type": "String"
+    },
+    "AvailabilityZone" : {
+      "Description" : "The availability zone where EC2 instances are created",
+      "Type": "String",
+      "Default": "us-east-1c"
+    }
+  },
+  "Resources" : {
+    "ElasticLoadBalancer": {
+      "Type": "AWS::ElasticLoadBalancing::LoadBalancer",
+      "Properties": {
+        "AvailabilityZones" : [ { "Ref" : "AvailabilityZone" } ],
+        "Listeners": [ {
+          "LoadBalancerPort": "80",
+          "InstancePort": {
+            "Ref": "WebServerPort"
+          },
+          "Protocol": "HTTP"
+        }],
+        "HealthCheck" : {
+          "Target" : { "Fn::Join" : [ "", ["HTTP:", { "Ref" : "WebServerPort" }, "/"]]},
+          "HealthyThreshold" : "3",
+          "UnhealthyThreshold" : "5",
+          "Interval" : "30",
+          "Timeout" : "5"
+        }
+      }
+    }
+  },
+
+  "Outputs" : {
+    "ELBName" : {
+      "Description" : "Name of ELB",
+      "Value" : { "Ref" : "ElasticLoadBalancer" }
+    }
+  }
+}
