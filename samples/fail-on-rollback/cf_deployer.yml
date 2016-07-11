@@ -1,0 +1,9 @@
+application: cf-deployer-sample-fail-on-rollback
+tags:
+  project: cf-deployer-sample-fail-on-rollback
+  environment: <%= environment %>
+  ownerEmail: bar@foo.com
+components:
+  base:
+    tags:
+      component: base
