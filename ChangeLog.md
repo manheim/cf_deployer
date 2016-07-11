@@ -54,3 +54,6 @@ version 1.4.0
   - Merge settings from parent component when given (https://github.com/manheim/cf_deployer/pull/37)
   - Added support for stack policies (https://github.com/manheim/cf_deployer/pull/40)
   - Fix broken Travis builds with newer version of bundler (https://github.com/manheim/cf_deployer/pull/42)
+
+version 1.5.0
+  - Treat deployments that end in a rollback as a failure
