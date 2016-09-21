@@ -50,6 +50,14 @@ module CfDeployer
         instance_info
       end
 
+      def wait_for_desired_capacity number
+        Timeout::timeout(@timeout){
+          while healthy_instance_count != number
+            sleep 15
+          end
+        }
+      end
+
       private
 
       def healthy_instance_count
@@ -71,14 +79,6 @@ module CfDeployer
             health[:instance] == instance ? health[:state] == 'InService' : false
           end
         end
-      end
-
-      def wait_for_desired_capacity number
-        Timeout::timeout(@timeout){
-          while healthy_instance_count != number
-            sleep 15
-          end
-        }
       end
 
       def aws_group

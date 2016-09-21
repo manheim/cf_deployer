@@ -131,4 +131,27 @@ describe 'Autoscaling group driver' do
       expect(@driver.instance_statuses).to eq( { 'i-abcd1234' => returned_status } )
     end
   end
+
+  describe '#wait_for_desired_capacity' do
+    it 'completes if healthy instance count matches desired capacity' do
+      expected_number = 5
+      expect(@driver).to receive(:healthy_instance_count).and_return(expected_number)
+
+      @driver.wait_for_desired_capacity(expected_number)
+    end
+
+    it 'times out if healthy instance count is less than desired capacity' do
+      expected_number = 5
+      expect(@driver).to receive(:healthy_instance_count).and_return(expected_number - 1)
+
+      expect { @driver.wait_for_desired_capacity(expected_number) }.to raise_error(Timeout::Error)
+    end
+
+    it 'times out if healthy instance count is more than desired capacity' do
+      expected_number = 5
+      expect(@driver).to receive(:healthy_instance_count).and_return(expected_number + 1)
+
+      expect { @driver.wait_for_desired_capacity(expected_number) }.to raise_error(Timeout::Error)
+    end
+  end
 end
