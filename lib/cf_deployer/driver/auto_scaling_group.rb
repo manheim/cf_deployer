@@ -23,7 +23,7 @@ module CfDeployer
 
         CfDeployer::Driver::DryRun.guard "Skipping ASG warmup" do
           aws_group.set_desired_capacity desired
-          wait_for_healthy_instance desired
+          wait_for_desired_capacity desired
         end
       end
 
@@ -73,7 +73,7 @@ module CfDeployer
         end
       end
 
-      def wait_for_healthy_instance number
+      def wait_for_desired_capacity number
         Timeout::timeout(@timeout){
           while healthy_instance_count != number
             sleep 15
