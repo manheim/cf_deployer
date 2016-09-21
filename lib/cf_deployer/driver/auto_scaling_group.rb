@@ -52,10 +52,14 @@ module CfDeployer
 
       def wait_for_desired_capacity number
         Timeout::timeout(@timeout){
-          while healthy_instance_count != number
+          until desired_capacity_reached?(number)
             sleep 15
           end
         }
+      end
+
+      def desired_capacity_reached? number
+        healthy_instance_count == number
       end
 
       private

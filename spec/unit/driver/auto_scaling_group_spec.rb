@@ -133,25 +133,44 @@ describe 'Autoscaling group driver' do
   end
 
   describe '#wait_for_desired_capacity' do
-    it 'completes if healthy instance count matches desired capacity' do
+    it 'completes if desired capacity reached' do
       expected_number = 5
-      expect(@driver).to receive(:healthy_instance_count).and_return(expected_number)
+      expect(@driver).to receive(:desired_capacity_reached?).with(expected_number).and_return(true)
 
       @driver.wait_for_desired_capacity(expected_number)
     end
 
-    it 'times out if healthy instance count is less than desired capacity' do
+    it 'times out if desired capacity is not reached' do
       expected_number = 5
-      expect(@driver).to receive(:healthy_instance_count).and_return(expected_number - 1)
+      expect(@driver).to receive(:desired_capacity_reached?).with(expected_number).and_return(false)
 
       expect { @driver.wait_for_desired_capacity(expected_number) }.to raise_error(Timeout::Error)
     end
+  end
 
-    it 'times out if healthy instance count is more than desired capacity' do
+  describe '#desired_capacity_reached?' do
+    it 'returns true if healthy instance count matches desired capacity' do
       expected_number = 5
+
+      expect(@driver).to receive(:healthy_instance_count).and_return(expected_number)
+
+      expect(@driver.desired_capacity_reached?(expected_number)).to be_true
+    end
+
+    it 'returns false if healthy instance count is less than desired capacity' do
+      expected_number = 5
+
+      expect(@driver).to receive(:healthy_instance_count).and_return(expected_number - 1)
+
+      expect(@driver.desired_capacity_reached?(expected_number)).to be_false
+    end
+
+    it 'returns false if healthy instance count is more than desired capacity' do
+      expected_number = 5
+
       expect(@driver).to receive(:healthy_instance_count).and_return(expected_number + 1)
 
-      expect { @driver.wait_for_desired_capacity(expected_number) }.to raise_error(Timeout::Error)
+      expect(@driver.desired_capacity_reached?(expected_number)).to be_false
     end
   end
 end
