@@ -3,7 +3,7 @@ module CfDeployer
     class AutoScalingGroup
       extend Forwardable
 
-      def_delegators :aws_group, :auto_scaling_instances, :ec2_instances, :load_balancers
+      def_delegators :aws_group, :auto_scaling_instances, :ec2_instances, :load_balancers, :desired_capacity
 
       attr_reader :group_name, :group
 
@@ -23,7 +23,7 @@ module CfDeployer
 
         CfDeployer::Driver::DryRun.guard "Skipping ASG warmup" do
           aws_group.set_desired_capacity desired
-          wait_for_desired_capacity desired
+          wait_for_desired_capacity
         end
       end
 
@@ -50,16 +50,16 @@ module CfDeployer
         instance_info
       end
 
-      def wait_for_desired_capacity number
+      def wait_for_desired_capacity
         Timeout::timeout(@timeout){
-          until desired_capacity_reached?(number)
+          until desired_capacity_reached?
             sleep 15
           end
         }
       end
 
-      def desired_capacity_reached? number
-        healthy_instance_count >= number
+      def desired_capacity_reached?
+        healthy_instance_count >= desired_capacity
       end
 
       private
