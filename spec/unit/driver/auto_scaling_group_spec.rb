@@ -165,12 +165,12 @@ describe 'Autoscaling group driver' do
       expect(@driver.desired_capacity_reached?(expected_number)).to be_false
     end
 
-    it 'returns false if healthy instance count is more than desired capacity' do
+    it 'returns true if healthy instance count is more than desired capacity' do
       expected_number = 5
 
       expect(@driver).to receive(:healthy_instance_count).and_return(expected_number + 1)
 
-      expect(@driver.desired_capacity_reached?(expected_number)).to be_false
+      expect(@driver.desired_capacity_reached?(expected_number)).to be_true
     end
   end
 end

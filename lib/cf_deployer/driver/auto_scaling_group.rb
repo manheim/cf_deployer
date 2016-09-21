@@ -59,7 +59,7 @@ module CfDeployer
       end
 
       def desired_capacity_reached? number
-        healthy_instance_count == number
+        healthy_instance_count >= number
       end
 
       private
