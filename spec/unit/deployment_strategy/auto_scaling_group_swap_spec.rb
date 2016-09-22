@@ -350,18 +350,15 @@ describe 'Auto Scaling Group Swap Deployment Strategy' do
     end
   end
 
-  context '#cool_down_active_stack' do
+  context '#cool_down' do
     it 'should cool down only those ASGs which actually exist' do
       blue_stack.live!
-      green_stack.die!
-      allow(CfDeployer::Driver::AutoScalingGroup).to receive(:new).with('greenASG') { green_asg_driver }
       allow(CfDeployer::Driver::AutoScalingGroup).to receive(:new).with('blueASG') { blue_asg_driver }
-      allow(green_asg_driver).to receive(:describe) { {desired: 0, min: 0, max: 0 } }
       allow(blue_asg_driver).to receive(:describe) { {desired: 1, min: 1, max: 3 } }
 
       strategy = CfDeployer::DeploymentStrategy.create(app, env, component, context)
       expect(blue_asg_driver).to receive(:cool_down)
-      strategy.send(:cool_down_active_stack)
+      strategy.send(:cool_down, blue_stack)
     end
   end
 

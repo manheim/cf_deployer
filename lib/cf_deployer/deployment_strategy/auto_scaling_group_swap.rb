@@ -35,7 +35,7 @@ module CfDeployer
 
       def swap_group is_switching_to_cooled = false
         is_switching_to_cooled ? warm_up_cooled_stack : warm_up_inactive_stack
-        cool_down_active_stack if active_stack && (is_switching_to_cooled || keep_previous_stack)
+        cool_down(active_stack) if active_stack && (is_switching_to_cooled || keep_previous_stack)
       end
 
       def keep_previous_stack
@@ -56,8 +56,8 @@ module CfDeployer
         warm_up_stack(inactive_stack, active_stack, true)
       end
 
-      def cool_down_active_stack
-        get_active_asgs(active_stack).each do |id|
+      def cool_down stack
+        get_active_asgs(stack).each do |id|
           asg_driver(id).cool_down
         end
       end
