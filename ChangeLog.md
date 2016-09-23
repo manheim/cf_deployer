@@ -57,3 +57,6 @@ version 1.4.0
 
 version 1.5.0
   - Treat deployments that end in a rollback as a failure
+
+unreleased
+  - Improve warm up for AutoScalingGroup based deployments (See: https://github.com/manheim/cf_deployer/issues/32)
