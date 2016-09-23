@@ -29,23 +29,27 @@ describe 'Autoscaling group driver' do
     it 'should warm up the group to the desired size' do
       expect(group).to receive(:auto_scaling_instances){[instance1, instance2]}
       expect(group).to receive(:set_desired_capacity).with(2)
+      expect(group).to receive(:desired_capacity).and_return(2)
       @driver.warm_up 2
     end
 
     it 'should wait for the warm up of the group even if desired is the same as the minimum' do
       expect(group).to receive(:auto_scaling_instances){[instance2]}
       expect(group).to receive(:set_desired_capacity).with(1)
+      expect(group).to receive(:desired_capacity).and_return(1)
       @driver.warm_up 1
     end
 
     it 'should ignore warming up if desired number is less than min size of the group' do
       expect(group).not_to receive(:set_desired_capacity)
+      expect(group).not_to receive(:desired_capacity)
       @driver.warm_up 0
     end
 
     it 'should warm up to maximum if desired number is greater than maximum size of group' do
       expect(group).to receive(:auto_scaling_instances){[instance1, instance2, instance3, instance4]}
       expect(group).to receive(:set_desired_capacity).with(4)
+      expect(group).to receive(:desired_capacity).and_return(4)
       @driver.warm_up 5
     end
   end
@@ -129,6 +133,49 @@ describe 'Autoscaling group driver' do
       expect(CfDeployer::Driver::Instance).to receive(:new).with(aws_instance) { cfd_instance }
       expect(cfd_instance).to receive(:status) { returned_status }
       expect(@driver.instance_statuses).to eq( { 'i-abcd1234' => returned_status } )
+    end
+  end
+
+  describe '#wait_for_desired_capacity' do
+    it 'completes if desired capacity reached' do
+      expect(@driver).to receive(:desired_capacity_reached?).and_return(true)
+
+      @driver.wait_for_desired_capacity
+    end
+
+    it 'times out if desired capacity is not reached' do
+      expect(@driver).to receive(:desired_capacity_reached?).and_return(false)
+
+      expect { @driver.wait_for_desired_capacity }.to raise_error(Timeout::Error)
+    end
+  end
+
+  describe '#desired_capacity_reached?' do
+    it 'returns true if healthy instance count matches desired capacity' do
+      expected_number = 5
+
+      expect(group).to receive(:desired_capacity).and_return(expected_number)
+      expect(@driver).to receive(:healthy_instance_count).and_return(expected_number)
+
+      expect(@driver.desired_capacity_reached?).to be_true
+    end
+
+    it 'returns false if healthy instance count is less than desired capacity' do
+      expected_number = 5
+
+      expect(group).to receive(:desired_capacity).and_return(expected_number)
+      expect(@driver).to receive(:healthy_instance_count).and_return(expected_number - 1)
+
+      expect(@driver.desired_capacity_reached?).to be_false
+    end
+
+    it 'returns true if healthy instance count is more than desired capacity' do
+      expected_number = 5
+
+      expect(group).to receive(:desired_capacity).and_return(expected_number)
+      expect(@driver).to receive(:healthy_instance_count).and_return(expected_number + 1)
+
+      expect(@driver.desired_capacity_reached?).to be_true
     end
   end
 end
