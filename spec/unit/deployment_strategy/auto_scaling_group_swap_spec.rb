@@ -485,4 +485,57 @@ describe 'Auto Scaling Group Swap Deployment Strategy' do
       asg_swap.send(:stack_active?, blue_stack).should be(true)
     end
   end
+
+  def default_options
+    {
+      app_name: 'app',
+      environment: 'environment',
+      component: 'component',
+      context: {
+        :'deployment-strategy' => 'auto-scaling-group-swap',
+        :settings => {
+          :'auto-scaling-group-name-output' => ['AutoScalingGroupID']
+        }
+      }
+    }
+  end
+
+  def create_strategy original_options = {}
+    options = default_options.merge(original_options)
+
+    create_stack(:blue, options.delete(:blue) || :inactive, options)
+    create_stack(:green, options.delete(:green) || :inactive, options)
+
+    CfDeployer::DeploymentStrategy.create(options[:app_name], options[:environment], options[:component], options[:context])
+  end
+
+  def create_stack color, status = :active, original_options = {}
+    options = default_options.merge(original_options)
+
+    stack = Fakes::Stack.new(name: color.to_s, outputs: {'web-elb-name' => "#{color}-elb"}, parameters: { name: color.to_s})
+
+    stack_color_name = (color.to_s == 'green' ? 'G' : 'B')
+    stack_name = "#{options[:app_name]}-#{options[:environment]}-#{options[:component]}-#{stack_color_name}"
+    allow(CfDeployer::Stack).to receive(:new).with(stack_name, options[:component], options[:context]).and_return(stack)
+
+    stack.tap do
+      status == :active ? activate_stack(stack) : kill_stack(stack)
+    end
+  end
+
+  def activate_stack stack
+    stack.live!
+
+    allow(stack).to receive(:output).with('AutoScalingGroupID').and_return("#{stack.name}ASG")
+    allow(stack).to receive(:find_output).with('AutoScalingGroupID').and_return("#{stack.name}ASG")
+    allow(stack).to receive(:resource_statuses).and_return(asg_ids("#{stack.name}ASG"))
+
+    asg_driver = double("#{stack.name}_asg_driver")
+    allow(asg_driver).to receive(:describe) {{desired: 2, min: 1, max: 5}}
+    allow(CfDeployer::Driver::AutoScalingGroup).to receive(:new).with("#{stack.name}ASG") { asg_driver }
+  end
+
+  def kill_stack stack
+    stack.die!
+  end
 end
