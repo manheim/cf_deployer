@@ -2,11 +2,24 @@ module CfDeployer
   module DeploymentStrategy
     class AutoScalingGroupSwap < BlueGreen
 
+      def cool_inactive_on_failure
+        yield
+      rescue => e
+        if both_stacks_active?
+          Log.error "Deployment failed - #{e.message} - and both stacks are active.  Cooling down failed stack.  Look into the failure, and try your deployment again."
+          cool_down(inactive_stack)
+        end
+
+        raise e
+      end
+
       def deploy
         check_blue_green_not_both_active 'Deployment'
         Log.info "Found active stack #{active_stack.name}" if active_stack
         delete_stack inactive_stack
-        create_inactive_stack
+        cool_inactive_on_failure do
+          create_inactive_stack
+        end
         swap_group
         run_hook(:'after-swap')
         Log.info "Active stack has been set to #{inactive_stack.name}"

@@ -127,6 +127,59 @@ describe 'Auto Scaling Group Swap Deployment Strategy' do
     end
   end
 
+  context 'on deployment failure' do
+    context 'in stack creation' do
+      context 'and only one stack is active' do
+        it 'should not cool down the only available stack' do
+          strategy = create_strategy(blue: :active)
+          error = RuntimeError.new("Error before inactive_stack became active")
+
+          expect(strategy).to receive(:create_inactive_stack).and_raise(error)
+          expect(strategy).to_not receive(:cool_down)
+
+          ignore_errors { strategy.deploy }
+        end
+
+        it 'should report the deployment as a failure' do
+          strategy = create_strategy(blue: :active)
+          error = RuntimeError.new("Error before inactive_stack became active")
+
+          expect(strategy).to receive(:create_inactive_stack).and_raise(error)
+          expect { strategy.deploy }.to raise_error(error)
+        end
+      end
+
+      context 'and both stacks are active' do
+        it 'should cool down inactive stack' do
+          strategy = create_strategy(blue: :active)
+          inactive_stack = strategy.send(:green_stack)
+
+          expect(strategy).to receive(:create_inactive_stack) do
+            activate_stack(inactive_stack)
+            raise RuntimeError.new("Error after inactive_stack became active")
+          end
+
+          expect(strategy).to receive(:cool_down).with(inactive_stack)
+          ignore_errors { strategy.deploy }
+        end
+
+        it 'should report the deployment as a failure' do
+          strategy = create_strategy(blue: :active)
+          inactive_stack = strategy.send(:green_stack)
+          error = RuntimeError.new("Error after inactive_stack became active")
+
+          expect(strategy).to receive(:create_inactive_stack) do
+            activate_stack(inactive_stack)
+            raise error
+          end
+
+          allow(strategy).to receive(:cool_down)
+          expect { strategy.deploy }.to raise_error(error)
+        end
+      end
+    end
+  end
+
   context 'has active group' do
     it 'should deploy blue stack if green stack is active' do
       blue_stack.live!
