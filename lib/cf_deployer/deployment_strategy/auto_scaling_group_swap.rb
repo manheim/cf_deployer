@@ -19,8 +19,8 @@ module CfDeployer
         delete_stack inactive_stack
         cool_inactive_on_failure do
           create_inactive_stack
+          swap_group
         end
-        swap_group
         run_hook(:'after-swap')
         Log.info "Active stack has been set to #{inactive_stack.name}"
         delete_stack(active_stack) if active_stack && !keep_previous_stack

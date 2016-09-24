@@ -178,6 +178,61 @@ describe 'Auto Scaling Group Swap Deployment Strategy' do
         end
       end
     end
+
+    context 'in asg swap' do
+      # This shouldn't be possible - a stack normally becomes active at creation
+      context 'and only one stack is active' do
+        it 'should not cool down the only available stack' do
+          strategy = create_strategy(blue: :active)
+          error = RuntimeError.new("Error during swap")
+
+          # The stack would normally be active after create_inactive_stack
+          allow(strategy).to receive(:create_inactive_stack)
+          expect(strategy).to receive(:swap_group).and_raise(error)
+          expect(strategy).to_not receive(:cool_down)
+
+          ignore_errors { strategy.deploy }
+        end
+
+        it 'should report the deployment as a failure' do
+          strategy = create_strategy(blue: :active)
+          error = RuntimeError.new("Error during swap")
+
+          # The stack would normally be active after create_inactive_stack
+          allow(strategy).to receive(:create_inactive_stack)
+          expect(strategy).to receive(:swap_group).and_raise(error)
+          expect(strategy).to_not receive(:cool_down)
+
+          expect { strategy.deploy }.to raise_error(error)
+        end
+      end
+
+      context 'and both stacks are active' do
+        it 'should cool down inactive stack' do
+          strategy = create_strategy(blue: :active)
+          inactive_stack = strategy.send(:green_stack)
+          error = RuntimeError.new("Error during swap")
+
+          allow(strategy).to receive(:create_inactive_stack) { activate_stack(inactive_stack) }
+          expect(strategy).to receive(:swap_group).and_raise(error)
+          expect(strategy).to receive(:cool_down).with(inactive_stack)
+
+          ignore_errors { strategy.deploy }
+        end
+
+        it 'should report the deployment as a failure' do
+          strategy = create_strategy(blue: :active)
+          inactive_stack = strategy.send(:green_stack)
+          error = RuntimeError.new("Error during swap")
+
+          allow(strategy).to receive(:create_inactive_stack) { activate_stack(inactive_stack) }
+          expect(strategy).to receive(:swap_group).and_raise(error)
+          expect(strategy).to receive(:cool_down).with(inactive_stack)
+
+          expect { strategy.deploy }.to raise_error(error)
+        end
+      end
+    end
   end
 
   context 'has active group' do
