@@ -442,8 +442,9 @@ describe 'Auto Scaling Group Swap Deployment Strategy' do
     end
 
     context 'green stack is active' do
+      let(:strategy) { create_strategy(green: :active, blue: :inactive) }
+
       it 'should warm up blue stack and cool down green stack' do
-        strategy = create_strategy(green: :active, blue: :inactive)
         active_stack = strategy.send(:green_stack)
         inactive_stack = strategy.send(:blue_stack)
 
@@ -452,11 +453,57 @@ describe 'Auto Scaling Group Swap Deployment Strategy' do
 
         strategy.switch
       end
+
+      context 'swap fails' do
+        context 'before blue stack becomes active' do
+          let(:error) { 'Error before inactive stack becomes active' }
+
+          it 'does not cool down any stack' do
+            expect(strategy).to receive(:warm_up_stack).and_raise(error)
+            expect(strategy).to_not receive(:cool_down)
+
+            ignore_errors { strategy.switch }
+          end
+
+          it 'reports the switch as a failure' do
+            expect(strategy).to receive(:warm_up_stack).and_raise(error)
+            allow(strategy).to receive(:cool_down)
+
+            expect { strategy.switch }.to raise_error(error)
+          end
+        end
+
+        context 'after both stacks became active' do
+          let(:error) { 'Error after inactive stack becomes active ' }
+
+          it 'cools down the blue stack' do
+            expect(strategy).to receive(:warm_up_stack) do
+              expect(strategy).to receive(:both_stacks_active?).and_return(true)
+              raise error
+            end
+
+            inactive_stack = strategy.send(:blue_stack)
+            expect(strategy).to receive(:cool_down).with(inactive_stack)
+
+            ignore_errors { strategy.switch }
+          end
+
+          it 'reports the switch as a failure' do
+            expect(strategy).to receive(:warm_up_stack) do
+              expect(strategy).to receive(:both_stacks_active?).and_return(true)
+              raise error
+            end
+
+            expect { strategy.switch }.to raise_error(error)
+          end
+        end
+      end
     end
 
     context 'blue stack is active' do
+      let(:strategy) { create_strategy(green: :inactive, blue: :active) }
+
       it 'should warm up green stack and cool down blue stack' do
-        strategy = create_strategy(green: :inactive, blue: :active)
         active_stack = strategy.send(:blue_stack)
         inactive_stack = strategy.send(:green_stack)
 
@@ -464,6 +511,51 @@ describe 'Auto Scaling Group Swap Deployment Strategy' do
         expect(strategy).to receive(:cool_down).with(active_stack)
 
         strategy.switch
+      end
+
+      context 'swap fails' do
+        context 'before green stack becomes active' do
+          let(:error) { 'Error before inactive stack becomes active' }
+
+          it 'does not cool down any stack' do
+            expect(strategy).to receive(:warm_up_stack).and_raise(error)
+            expect(strategy).to_not receive(:cool_down)
+
+            ignore_errors { strategy.switch }
+          end
+
+          it 'reports the switch as a failure' do
+            expect(strategy).to receive(:warm_up_stack).and_raise(error)
+            allow(strategy).to receive(:cool_down)
+
+            expect { strategy.switch }.to raise_error(error)
+          end
+        end
+
+        context 'after both stacks become active' do
+          let(:error) { 'Error after inactive stack becomes active ' }
+
+          it 'cools down the green stack' do
+            expect(strategy).to receive(:warm_up_stack) do
+              expect(strategy).to receive(:both_stacks_active?).and_return(true)
+              raise error
+            end
+
+            inactive_stack = strategy.send(:green_stack)
+            expect(strategy).to receive(:cool_down).with(inactive_stack)
+
+            ignore_errors { strategy.switch }
+          end
+
+          it 'reports the switch as a failure' do
+            expect(strategy).to receive(:warm_up_stack) do
+              expect(strategy).to receive(:both_stacks_active?).and_return(true)
+              raise error
+            end
+
+            expect { strategy.switch }.to raise_error(error)
+          end
+        end
       end
     end
   end

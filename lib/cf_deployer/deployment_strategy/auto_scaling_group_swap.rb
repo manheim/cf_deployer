@@ -36,7 +36,7 @@ module CfDeployer
       def switch
         check_blue_green_not_both_active 'Switch'
         raise ApplicationError.new('Only one color stack exists, cannot switch to a non-existent version!') unless both_stacks_exist?
-        swap_group true
+        cool_inactive_on_failure { swap_group true }
       end
 
       private
