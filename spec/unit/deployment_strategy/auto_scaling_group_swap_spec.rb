@@ -414,45 +414,55 @@ describe 'Auto Scaling Group Swap Deployment Strategy' do
   describe '#switch' do
     context 'both stacks are active' do
       it 'should raise an error' do
-        green_stack.live!
-        blue_stack.live!
-        allow(CfDeployer::Driver::AutoScalingGroup).to receive(:new).with('greenASG') { green_asg_driver }
-        allow(CfDeployer::Driver::AutoScalingGroup).to receive(:new).with('blueASG') { blue_asg_driver }
-        allow(green_asg_driver).to receive(:describe) { {desired: 1, min: 1, max: 3 } }
-        allow(blue_asg_driver).to receive(:describe) { {desired: 1, min: 1, max: 3 } }
+        strategy = create_strategy(blue: :active, green: :active)
+        error = 'Found both auto-scaling-groups, ["greenASG", "blueASG"], in green and blue stacks are active. Switch aborted!'
 
-        strategy = CfDeployer::DeploymentStrategy.create(app, env, component, context)
-        expect{strategy.switch}.to raise_error 'Found both auto-scaling-groups, ["greenASG", "blueASG"], in green and blue stacks are active. Switch aborted!'
+        expect { strategy.switch }.to raise_error(error)
       end
     end
 
     context 'both stacks do not exist' do
-      it 'should raise an error' do
-        green_stack.live!
-        blue_stack.die!
-        allow(CfDeployer::Driver::AutoScalingGroup).to receive(:new).with('greenASG') { green_asg_driver }
-        allow(CfDeployer::Driver::AutoScalingGroup).to receive(:new).with('blueASG') { blue_asg_driver }
-        allow(green_asg_driver).to receive(:describe) { {desired: 1, min: 1, max: 3 } }
+      context '(only green exists)' do
+        it 'should raise an error' do
+          strategy = create_strategy(green: :active, blue: :dead)
+          error = 'Only one color stack exists, cannot switch to a non-existent version!'
 
-        strategy = CfDeployer::DeploymentStrategy.create(app, env, component, context)
-        expect{ strategy.switch }.to raise_error 'Only one color stack exists, cannot switch to a non-existent version!'
+          expect { strategy.switch }.to raise_error(error)
+        end
+      end
+
+      context '(only blue exists)' do
+        it 'should raise an error' do
+          strategy = create_strategy(green: :dead, blue: :active)
+          error = 'Only one color stack exists, cannot switch to a non-existent version!'
+
+          expect { strategy.switch }.to raise_error(error)
+        end
       end
     end
 
     context 'green stack is active' do
       it 'should warm up blue stack and cool down green stack' do
-        green_stack.live!
-        blue_stack.live!
-        allow(CfDeployer::Driver::AutoScalingGroup).to receive(:new).with('blueASG') { blue_asg_driver }
-        allow(CfDeployer::Driver::AutoScalingGroup).to receive(:new).with('greenASG') { green_asg_driver }
-        options = {desired: 5, min: 3, max: 7}
-        allow(green_asg_driver).to receive(:describe) {options}
-        allow(blue_asg_driver).to receive(:describe) {{desired: 0, min: 0, max: 0}}
+        strategy = create_strategy(green: :active, blue: :inactive)
+        active_stack = strategy.send(:green_stack)
+        inactive_stack = strategy.send(:blue_stack)
 
-        expect(blue_asg_driver).to receive(:warm_up_cooled_group).with(options)
-        expect(green_asg_driver).to receive(:cool_down)
+        expect(strategy).to receive(:warm_up_stack).with(inactive_stack, active_stack, true)
+        expect(strategy).to receive(:cool_down).with(active_stack)
 
-        strategy = CfDeployer::DeploymentStrategy.create(app, env, component, context)
+        strategy.switch
+      end
+    end
+
+    context 'blue stack is active' do
+      it 'should warm up green stack and cool down blue stack' do
+        strategy = create_strategy(green: :inactive, blue: :active)
+        active_stack = strategy.send(:blue_stack)
+        inactive_stack = strategy.send(:green_stack)
+
+        expect(strategy).to receive(:warm_up_stack).with(inactive_stack, active_stack, true)
+        expect(strategy).to receive(:cool_down).with(active_stack)
+
         strategy.switch
       end
     end
@@ -611,8 +621,8 @@ describe 'Auto Scaling Group Swap Deployment Strategy' do
   def create_strategy original_options = {}
     options = default_options.merge(original_options)
 
-    create_stack(:blue, options.delete(:blue) || :inactive, options)
-    create_stack(:green, options.delete(:green) || :inactive, options)
+    create_stack(:blue, options.delete(:blue) || :dead, options)
+    create_stack(:green, options.delete(:green) || :dead, options)
 
     CfDeployer::DeploymentStrategy.create(options[:app_name], options[:environment], options[:component], options[:context])
   end
@@ -627,11 +637,16 @@ describe 'Auto Scaling Group Swap Deployment Strategy' do
     allow(CfDeployer::Stack).to receive(:new).with(stack_name, options[:component], options[:context]).and_return(stack)
 
     stack.tap do
-      status == :active ? activate_stack(stack) : kill_stack(stack)
+      case status
+      when :active; activate_stack(stack)
+      when :inactive; activate_stack(stack, { desired: 0, max: 0, min: 0 })
+      when :dead; kill_stack(stack)
+      else raise "Trying to create stack with unknown status; #{status}"
+      end
     end
   end
 
-  def activate_stack stack
+  def activate_stack stack, instances = {}
     stack.live!
 
     allow(stack).to receive(:output).with('AutoScalingGroupID').and_return("#{stack.name}ASG")
@@ -639,7 +654,11 @@ describe 'Auto Scaling Group Swap Deployment Strategy' do
     allow(stack).to receive(:resource_statuses).and_return(asg_ids("#{stack.name}ASG"))
 
     asg_driver = double("#{stack.name}_asg_driver")
-    allow(asg_driver).to receive(:describe) {{desired: 2, min: 1, max: 5}}
+    instances[:desired] ||= 2
+    instances[:min] ||= 1
+    instances[:max] ||= 5
+
+    allow(asg_driver).to receive(:describe).and_return(instances)
     allow(CfDeployer::Driver::AutoScalingGroup).to receive(:new).with("#{stack.name}ASG") { asg_driver }
   end
 
