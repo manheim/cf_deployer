@@ -22,7 +22,12 @@ namespace :spec do
     t.pattern = 'spec/functional/**/*_spec.rb'
   end
 
-  task :all => [:unit, :functional]
+  RSpec::Core::RakeTask.new(:aws_call_count) do |t|
+    t.rspec_opts = RSPEC_OPTS
+    t.pattern = 'spec/aws_call_count/**/*_spec.rb'
+  end
+
+  task :all => [:unit, :functional, :aws_call_count]
 end
 
 task :default  => 'spec:all'

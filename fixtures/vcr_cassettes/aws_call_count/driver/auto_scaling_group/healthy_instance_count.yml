@@ -1,0 +1,243 @@
+---
+http_interactions:
+- request:
+    method: post
+    uri: https://autoscaling.us-east-1.amazonaws.com/
+  response:
+    status:
+      code: 200
+      message: OK
+    body:
+      encoding: US-ASCII
+      string: ! "<DescribeAutoScalingGroupsResponse xmlns=\"http://autoscaling.amazonaws.com/doc/2011-01-01/\">\n
+        \ <DescribeAutoScalingGroupsResult>\n    <AutoScalingGroups>\n      <member>\n
+        \       <HealthCheckType>ELB</HealthCheckType>\n        <LoadBalancerNames>\n
+        \         <member>myELB</member>\n        </LoadBalancerNames>\n
+        \       <Instances>\n          <member>\n            <LaunchConfigurationName>myLaunchConfig</LaunchConfigurationName>\n
+        \           <LifecycleState>InService</LifecycleState>\n            <InstanceId>instance1</InstanceId>\n
+        \           <HealthStatus>Healthy</HealthStatus>\n            <ProtectedFromScaleIn>false</ProtectedFromScaleIn>\n
+        \           <AvailabilityZone>us-east-1d</AvailabilityZone>\n          </member>\n
+        \         <member>\n            <LaunchConfigurationName>myLaunchConfig</LaunchConfigurationName>\n
+        \           <LifecycleState>InService</LifecycleState>\n            <InstanceId>instance2</InstanceId>\n
+        \           <HealthStatus>Healthy</HealthStatus>\n            <ProtectedFromScaleIn>false</ProtectedFromScaleIn>\n
+        \           <AvailabilityZone>us-east-1c</AvailabilityZone>\n          </member>\n
+        \         <member>\n            <LaunchConfigurationName>myLaunchConfig</LaunchConfigurationName>\n
+        \           <LifecycleState>InService</LifecycleState>\n            <InstanceId>instance3</InstanceId>\n
+        \           <HealthStatus>Healthy</HealthStatus>\n            <ProtectedFromScaleIn>false</ProtectedFromScaleIn>\n
+        \           <AvailabilityZone>us-east-1e</AvailabilityZone>\n          </member>\n
+        \         <member>\n            <LaunchConfigurationName>myLaunchConfig</LaunchConfigurationName>\n
+        \           <LifecycleState>InService</LifecycleState>\n            <InstanceId>instance4</InstanceId>\n
+        \           <HealthStatus>Healthy</HealthStatus>\n            <ProtectedFromScaleIn>false</ProtectedFromScaleIn>\n
+        \           <AvailabilityZone>us-east-1e</AvailabilityZone>\n          </member>\n
+        \       </Instances>\n        <TerminationPolicies>\n          <member>Default</member>\n
+        \       </TerminationPolicies>\n        <DefaultCooldown>300</DefaultCooldown>\n
+        \       <AutoScalingGroupARN>arn:aws:autoscaling:us-east-1:12345:autoScalingGroup:12345:autoScalingGroupName/myASG</AutoScalingGroupARN>\n
+        \       <EnabledMetrics/>\n        <MaxSize>5</MaxSize>\n        <AvailabilityZones>\n
+        \         <member>us-east-1c</member>\n          <member>us-east-1d</member>\n
+        \         <member>us-east-1e</member>\n        </AvailabilityZones>\n        <TargetGroupARNs/>\n
+        \       <Tags/>\n
+        \       <LaunchConfigurationName>myLaunchConfig</LaunchConfigurationName>\n
+        \       <AutoScalingGroupName>myASG</AutoScalingGroupName>\n
+        \       <HealthCheckGracePeriod>600</HealthCheckGracePeriod>\n        <NewInstancesProtectedFromScaleIn>false</NewInstancesProtectedFromScaleIn>\n
+        \       <CreatedTime>2016-09-23T03:52:21.733Z</CreatedTime>\n        <MinSize>1</MinSize>\n
+        \       <SuspendedProcesses/>\n        <DesiredCapacity>4</DesiredCapacity>\n
+        \       <VPCZoneIdentifier>subnet</VPCZoneIdentifier>\n
+        \     </member>\n    </AutoScalingGroups>\n  </DescribeAutoScalingGroupsResult>\n
+        \ <ResponseMetadata>\n    <RequestId>12345</RequestId>\n
+        \ </ResponseMetadata>\n</DescribeAutoScalingGroupsResponse>\n"
+    http_version: 
+  recorded_at: Tue, 27 Sep 2016 05:47:40 GMT
+- request:
+    method: post
+    uri: https://autoscaling.us-east-1.amazonaws.com/
+  response:
+    status:
+      code: 200
+      message: OK
+    body:
+      encoding: US-ASCII
+      string: ! "<DescribeAutoScalingInstancesResponse xmlns=\"http://autoscaling.amazonaws.com/doc/2011-01-01/\">\n
+        \ <DescribeAutoScalingInstancesResult>\n    <AutoScalingInstances>\n      <member>\n
+        \       <LaunchConfigurationName>myLaunchConfig</LaunchConfigurationName>\n
+        \       <LifecycleState>InService</LifecycleState>\n        <AutoScalingGroupName></AutoScalingGroupName>\n
+        \       <InstanceId>instance1</InstanceId>\n        <HealthStatus>HEALTHY</HealthStatus>\n
+        \       <ProtectedFromScaleIn>false</ProtectedFromScaleIn>\n        <AvailabilityZone>us-east-1d</AvailabilityZone>\n
+        \     </member>\n    </AutoScalingInstances>\n  </DescribeAutoScalingInstancesResult>\n
+        \ <ResponseMetadata>\n    <RequestId>12346</RequestId>\n
+        \ </ResponseMetadata>\n</DescribeAutoScalingInstancesResponse>\n"
+    http_version: 
+  recorded_at: Tue, 27 Sep 2016 05:47:40 GMT
+- request:
+    method: post
+    uri: https://elasticloadbalancing.us-east-1.amazonaws.com/
+    body:
+      encoding: UTF-8
+      string: Action=DescribeInstanceHealth&LoadBalancerName=myELB&Timestamp=2016-09-27T05%3A47%3A41Z&Version=2012-06-01
+  response:
+    status:
+      code: 200
+      message: OK
+    body:
+      encoding: US-ASCII
+      string: ! "<DescribeInstanceHealthResponse xmlns=\"http://elasticloadbalancing.amazonaws.com/doc/2012-06-01/\">\n
+        \ <DescribeInstanceHealthResult>\n    <InstanceStates>\n      <member>\n        <Description>N/A</Description>\n
+        \       <InstanceId>instance1</InstanceId>\n        <ReasonCode>N/A</ReasonCode>\n
+        \       <State>InService</State>\n      </member>\n      <member>\n        <Description>N/A</Description>\n
+        \       <InstanceId>instance2</InstanceId>\n        <ReasonCode>N/A</ReasonCode>\n
+        \       <State>InService</State>\n      </member>\n      <member>\n        <Description>N/A</Description>\n
+        \       <InstanceId>instance3</InstanceId>\n        <ReasonCode>N/A</ReasonCode>\n
+        \       <State>InService</State>\n      </member>\n      <member>\n        <Description>N/A</Description>\n
+        \       <InstanceId>instance4</InstanceId>\n        <ReasonCode>N/A</ReasonCode>\n
+        \       <State>InService</State>\n      </member>\n    </InstanceStates>\n
+        \ </DescribeInstanceHealthResult>\n  <ResponseMetadata>\n    <RequestId>12347</RequestId>\n
+        \ </ResponseMetadata>\n</DescribeInstanceHealthResponse>\n"
+    http_version: 
+  recorded_at: Tue, 27 Sep 2016 05:47:41 GMT
+- request:
+    method: post
+    uri: https://autoscaling.us-east-1.amazonaws.com/
+    body:
+      encoding: UTF-8
+      string: Action=DescribeAutoScalingInstances&InstanceIds.member.1=instance2&Timestamp=2016-09-27T05%3A47%3A41Z&Version=2011-01-01
+  response:
+    status:
+      code: 200
+      message: OK
+    body:
+      encoding: US-ASCII
+      string: ! "<DescribeAutoScalingInstancesResponse xmlns=\"http://autoscaling.amazonaws.com/doc/2011-01-01/\">\n
+        \ <DescribeAutoScalingInstancesResult>\n    <AutoScalingInstances>\n      <member>\n
+        \       <LaunchConfigurationName>myLaunchConfig</LaunchConfigurationName>\n
+        \       <LifecycleState>InService</LifecycleState>\n        <AutoScalingGroupName>myASG</AutoScalingGroupName>\n
+        \       <InstanceId>instance2</InstanceId>\n        <HealthStatus>HEALTHY</HealthStatus>\n
+        \       <ProtectedFromScaleIn>false</ProtectedFromScaleIn>\n        <AvailabilityZone>us-east-1c</AvailabilityZone>\n
+        \     </member>\n    </AutoScalingInstances>\n  </DescribeAutoScalingInstancesResult>\n
+        \ <ResponseMetadata>\n    <RequestId>12348</RequestId>\n
+        \ </ResponseMetadata>\n</DescribeAutoScalingInstancesResponse>\n"
+    http_version: 
+  recorded_at: Tue, 27 Sep 2016 05:47:42 GMT
+- request:
+    method: post
+    uri: https://elasticloadbalancing.us-east-1.amazonaws.com/
+    body:
+      encoding: UTF-8
+      string: Action=DescribeInstanceHealth&LoadBalancerName=myELB&Timestamp=2016-09-27T05%3A47%3A42Z&Version=2012-06-01
+  response:
+    status:
+      code: 200
+      message: OK
+    body:
+      encoding: US-ASCII
+      string: ! "<DescribeInstanceHealthResponse xmlns=\"http://elasticloadbalancing.amazonaws.com/doc/2012-06-01/\">\n
+        \ <DescribeInstanceHealthResult>\n    <InstanceStates>\n      <member>\n        <Description>N/A</Description>\n
+        \       <InstanceId>instance1</InstanceId>\n        <ReasonCode>N/A</ReasonCode>\n
+        \       <State>InService</State>\n      </member>\n      <member>\n        <Description>N/A</Description>\n
+        \       <InstanceId>instance2</InstanceId>\n        <ReasonCode>N/A</ReasonCode>\n
+        \       <State>InService</State>\n      </member>\n      <member>\n        <Description>N/A</Description>\n
+        \       <InstanceId>instance3</InstanceId>\n        <ReasonCode>N/A</ReasonCode>\n
+        \       <State>InService</State>\n      </member>\n      <member>\n        <Description>N/A</Description>\n
+        \       <InstanceId>instance4</InstanceId>\n        <ReasonCode>N/A</ReasonCode>\n
+        \       <State>InService</State>\n      </member>\n    </InstanceStates>\n
+        \ </DescribeInstanceHealthResult>\n  <ResponseMetadata>\n    <RequestId>12349</RequestId>\n
+        \ </ResponseMetadata>\n</DescribeInstanceHealthResponse>\n"
+    http_version: 
+  recorded_at: Tue, 27 Sep 2016 05:47:42 GMT
+- request:
+    method: post
+    uri: https://autoscaling.us-east-1.amazonaws.com/
+    body:
+      encoding: UTF-8
+      string: Action=DescribeAutoScalingInstances&InstanceIds.member.1=instance3&Timestamp=2016-09-27T05%3A47%3A42Z&Version=2011-01-01
+  response:
+    status:
+      code: 200
+      message: OK
+    body:
+      encoding: US-ASCII
+      string: ! "<DescribeAutoScalingInstancesResponse xmlns=\"http://autoscaling.amazonaws.com/doc/2011-01-01/\">\n
+        \ <DescribeAutoScalingInstancesResult>\n    <AutoScalingInstances>\n      <member>\n
+        \       <LaunchConfigurationName>myLaunchConfig</LaunchConfigurationName>\n
+        \       <LifecycleState>InService</LifecycleState>\n        <AutoScalingGroupName>myASG</AutoScalingGroupName>\n
+        \       <InstanceId>instance3</InstanceId>\n        <HealthStatus>HEALTHY</HealthStatus>\n
+        \       <ProtectedFromScaleIn>false</ProtectedFromScaleIn>\n        <AvailabilityZone>us-east-1e</AvailabilityZone>\n
+        \     </member>\n    </AutoScalingInstances>\n  </DescribeAutoScalingInstancesResult>\n
+        \ <ResponseMetadata>\n    <RequestId>12350</RequestId>\n
+        \ </ResponseMetadata>\n</DescribeAutoScalingInstancesResponse>\n"
+    http_version: 
+  recorded_at: Tue, 27 Sep 2016 05:47:42 GMT
+- request:
+    method: post
+    uri: https://elasticloadbalancing.us-east-1.amazonaws.com/
+    body:
+      encoding: UTF-8
+      string: Action=DescribeInstanceHealth&LoadBalancerName=myELB&Timestamp=2016-09-27T05%3A47%3A42Z&Version=2012-06-01
+  response:
+    status:
+      code: 200
+      message: OK
+    body:
+      encoding: US-ASCII
+      string: ! "<DescribeInstanceHealthResponse xmlns=\"http://elasticloadbalancing.amazonaws.com/doc/2012-06-01/\">\n
+        \ <DescribeInstanceHealthResult>\n    <InstanceStates>\n      <member>\n        <Description>N/A</Description>\n
+        \       <InstanceId>instance1</InstanceId>\n        <ReasonCode>N/A</ReasonCode>\n
+        \       <State>InService</State>\n      </member>\n      <member>\n        <Description>N/A</Description>\n
+        \       <InstanceId>instance2</InstanceId>\n        <ReasonCode>N/A</ReasonCode>\n
+        \       <State>InService</State>\n      </member>\n      <member>\n        <Description>N/A</Description>\n
+        \       <InstanceId>instance3</InstanceId>\n        <ReasonCode>N/A</ReasonCode>\n
+        \       <State>InService</State>\n      </member>\n      <member>\n        <Description>N/A</Description>\n
+        \       <InstanceId>instance4</InstanceId>\n        <ReasonCode>N/A</ReasonCode>\n
+        \       <State>InService</State>\n      </member>\n    </InstanceStates>\n
+        \ </DescribeInstanceHealthResult>\n  <ResponseMetadata>\n    <RequestId>12351</RequestId>\n
+        \ </ResponseMetadata>\n</DescribeInstanceHealthResponse>\n"
+    http_version: 
+  recorded_at: Tue, 27 Sep 2016 05:47:42 GMT
+- request:
+    method: post
+    uri: https://autoscaling.us-east-1.amazonaws.com/
+    body:
+      encoding: UTF-8
+      string: Action=DescribeAutoScalingInstances&InstanceIds.member.1=instance4&Timestamp=2016-09-27T05%3A47%3A42Z&Version=2011-01-01
+  response:
+    status:
+      code: 200
+      message: OK
+    body:
+      encoding: US-ASCII
+      string: ! "<DescribeAutoScalingInstancesResponse xmlns=\"http://autoscaling.amazonaws.com/doc/2011-01-01/\">\n
+        \ <DescribeAutoScalingInstancesResult>\n    <AutoScalingInstances>\n      <member>\n
+        \       <LaunchConfigurationName>myLaunchConfig</LaunchConfigurationName>\n
+        \       <LifecycleState>InService</LifecycleState>\n        <AutoScalingGroupName>myASG</AutoScalingGroupName>\n
+        \       <InstanceId>instance4</InstanceId>\n        <HealthStatus>HEALTHY</HealthStatus>\n
+        \       <ProtectedFromScaleIn>false</ProtectedFromScaleIn>\n        <AvailabilityZone>us-east-1e</AvailabilityZone>\n
+        \     </member>\n    </AutoScalingInstances>\n  </DescribeAutoScalingInstancesResult>\n
+        \ <ResponseMetadata>\n    <RequestId>12352</RequestId>\n
+        \ </ResponseMetadata>\n</DescribeAutoScalingInstancesResponse>\n"
+    http_version: 
+  recorded_at: Tue, 27 Sep 2016 05:47:42 GMT
+- request:
+    method: post
+    uri: https://elasticloadbalancing.us-east-1.amazonaws.com/
+    body:
+      encoding: UTF-8
+      string: Action=DescribeInstanceHealth&LoadBalancerName=myELB&Timestamp=2016-09-27T05%3A47%3A42Z&Version=2012-06-01
+  response:
+    status:
+      code: 200
+      message: OK
+    body:
+      encoding: US-ASCII
+      string: ! "<DescribeInstanceHealthResponse xmlns=\"http://elasticloadbalancing.amazonaws.com/doc/2012-06-01/\">\n
+        \ <DescribeInstanceHealthResult>\n    <InstanceStates>\n      <member>\n        <Description>N/A</Description>\n
+        \       <InstanceId>instance1</InstanceId>\n        <ReasonCode>N/A</ReasonCode>\n
+        \       <State>InService</State>\n      </member>\n      <member>\n        <Description>N/A</Description>\n
+        \       <InstanceId>instance2</InstanceId>\n        <ReasonCode>N/A</ReasonCode>\n
+        \       <State>InService</State>\n      </member>\n      <member>\n        <Description>N/A</Description>\n
+        \       <InstanceId>instance3</InstanceId>\n        <ReasonCode>N/A</ReasonCode>\n
+        \       <State>InService</State>\n      </member>\n      <member>\n        <Description>N/A</Description>\n
+        \       <InstanceId>instance4</InstanceId>\n        <ReasonCode>N/A</ReasonCode>\n
+        \       <State>InService</State>\n      </member>\n    </InstanceStates>\n
+        \ </DescribeInstanceHealthResult>\n  <ResponseMetadata>\n    <RequestId>12353</RequestId>\n
+        \ </ResponseMetadata>\n</DescribeInstanceHealthResponse>\n"
+    http_version: 
+  recorded_at: Tue, 27 Sep 2016 05:47:42 GMT
+recorded_with: VCR 2.9.3
