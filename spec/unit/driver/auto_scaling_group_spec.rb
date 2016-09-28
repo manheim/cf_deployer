@@ -27,80 +27,142 @@ describe 'Autoscaling group driver' do
 
   describe '#warm_up' do
     it 'should warm up the group to the desired size' do
-      expect(group).to receive(:auto_scaling_instances){[instance1, instance2]}
       expect(group).to receive(:set_desired_capacity).with(2)
-      expect(group).to receive(:desired_capacity).and_return(2)
+      expect(@driver).to receive(:wait_for_desired_capacity)
       @driver.warm_up 2
     end
 
     it 'should wait for the warm up of the group even if desired is the same as the minimum' do
-      expect(group).to receive(:auto_scaling_instances){[instance2]}
       expect(group).to receive(:set_desired_capacity).with(1)
-      expect(group).to receive(:desired_capacity).and_return(1)
+      expect(@driver).to receive(:wait_for_desired_capacity)
       @driver.warm_up 1
     end
 
     it 'should ignore warming up if desired number is less than min size of the group' do
       expect(group).not_to receive(:set_desired_capacity)
-      expect(group).not_to receive(:desired_capacity)
+      expect(@driver).not_to receive(:wait_for_desired_capacity)
       @driver.warm_up 0
     end
 
     it 'should warm up to maximum if desired number is greater than maximum size of group' do
-      expect(group).to receive(:auto_scaling_instances){[instance1, instance2, instance3, instance4]}
       expect(group).to receive(:set_desired_capacity).with(4)
-      expect(group).to receive(:desired_capacity).and_return(4)
+      expect(@driver).to receive(:wait_for_desired_capacity)
       @driver.warm_up 5
     end
   end
 
+  describe '#healthy_instance_ids' do
+    it 'returns the ids of all instances that are healthy' do
+      instance1 =  double('instance1', :health_status => 'HEALTHY', id: 'instance1')
+      instance2 =  double('instance2', :health_status => 'HEALTHY', id: 'instance2')
+      instance3 =  double('instance3', :health_status => 'UNHEALTHY', id: 'instance3')
+      instance4 =  double('instance4', :health_status => 'HEALTHY', id: 'instance4')
+      allow(group).to receive(:auto_scaling_instances){[instance1, instance2, instance3, instance4]}
+
+      expect(@driver.healthy_instance_ids).to eql ['instance1', 'instance2', 'instance4']
+    end
+  end
+
+  describe '#in_service_instance_ids' do
+    context 'when there are no load balancers' do
+      it 'returns no ids' do
+        allow(group).to receive(:load_balancers).and_return([])
+
+        expect(@driver.in_service_instance_ids).to eq []
+      end
+    end
+
+    context 'when there is only 1 elb' do
+      it 'returns the ids of all instances that are in service' do
+        health1 = { state: 'InService', instance: double('i1', id: 'instance1') }
+        health2 = { state: 'OutOfService', instance: double('i2', id: 'instance2') }
+        health3 = { state: 'InService', instance: double('i3', id: 'instance3') }
+        health4 = { state: 'InService', instance: double('i4', id: 'instance4') }
+
+        instance_collection = double('instance_collection', health: [health1, health2, health3, health4])
+        elb = double('elb', instances: instance_collection)
+        allow(group).to receive(:load_balancers).and_return([ elb ])
+
+        expect(@driver.in_service_instance_ids).to eql ['instance1', 'instance3', 'instance4']
+      end
+    end
+
+    context 'when there are multiple elbs' do
+      it 'returns only the ids of instances that are in all ELBs' do
+        health1 = { state: 'InService', instance: double('i1', id: 'instance1') }
+        health2 = { state: 'InService', instance: double('i2', id: 'instance2') }
+        health3 = { state: 'InService', instance: double('i3', id: 'instance3') }
+        health4 = { state: 'InService', instance: double('i4', id: 'instance4') }
+        health5 = { state: 'InService', instance: double('i5', id: 'instance5') }
+
+        instance_collection1 = double('instance_collection1', health: [health1, health2, health3])
+        instance_collection2 = double('instance_collection2', health: [health2, health3, health4])
+        instance_collection3 = double('instance_collection3', health: [health2, health3, health5])
+        elb1 = double('elb1', instances: instance_collection1)
+        elb2 = double('elb2', instances: instance_collection2)
+        elb3 = double('elb3', instances: instance_collection3)
+        allow(group).to receive(:load_balancers).and_return([ elb1, elb2, elb3 ])
+
+        # Only instance 2 and 3 are associated with all ELB's
+        expect(@driver.in_service_instance_ids).to eql ['instance2', 'instance3']
+      end
+
+      it 'returns only the ids instances that are InService in all ELBs' do
+        health11 = { state: 'OutOfService', instance: double('i1', id: 'instance1') }
+        health12 = { state: 'InService', instance: double('i2', id: 'instance2') }
+        health13 = { state: 'InService', instance: double('i3', id: 'instance3') }
+
+        health21 = { state: 'InService', instance: double('i1', id: 'instance1') }
+        health22 = { state: 'InService', instance: double('i2', id: 'instance2') }
+        health23 = { state: 'OutOfService', instance: double('i3', id: 'instance3') }
+
+        health31 = { state: 'InService', instance: double('i1', id: 'instance1') }
+        health32 = { state: 'InService', instance: double('i2', id: 'instance2') }
+        health33 = { state: 'InService', instance: double('i3', id: 'instance3') }
+
+        instance_collection1 = double('instance_collection1', health: [health11, health12, health13])
+        instance_collection2 = double('instance_collection2', health: [health21, health22, health23])
+        instance_collection3 = double('instance_collection3', health: [health31, health32, health33])
+
+        elb1 = double('elb1', instances: instance_collection1)
+        elb2 = double('elb2', instances: instance_collection2)
+        elb3 = double('elb3', instances: instance_collection3)
+
+        allow(group).to receive(:load_balancers).and_return([ elb1, elb2, elb3 ])
+
+        # Only instance 2 is InService across all ELB's
+        expect(@driver.in_service_instance_ids).to eql ['instance2']
+      end
+    end
+  end
+
   describe '#healthy_instance_count' do
-    it 'should respond with the number of instances that are HEALTHY' do
-      instance5 =  double('instance1', :health_status => 'UNHEALTHY')
-      allow(group).to receive(:auto_scaling_instances){[instance1, instance2, instance3, instance4, instance5]}
-      expect(@driver.send(:healthy_instance_count)).to eql 4
+    context 'when there are no load balancers' do
+      it 'should return the number of healthy instances' do
+        healthy_instance_ids = ['1', '3', '4', '5']
+        allow(@driver).to receive(:load_balancers).and_return([])
+        expect(@driver).to receive(:healthy_instance_ids).and_return(healthy_instance_ids)
+
+        expect(@driver.healthy_instance_count).to eql(healthy_instance_ids.count)
+      end
+    end
+
+    context 'when load balancers exist' do
+      it 'should return the number of instances that are both healthy, and in service' do
+        healthy_instance_ids = ['1', '3', '4', '5']
+        in_service_instance_ids = ['3', '4']
+        allow(@driver).to receive(:load_balancers).and_return(double('elb', empty?: false))
+        expect(@driver).to receive(:healthy_instance_ids).and_return(healthy_instance_ids)
+        expect(@driver).to receive(:in_service_instance_ids).and_return(in_service_instance_ids)
+
+        # Only instances 3 and 4 are both healthy and in service
+        expect(@driver.healthy_instance_count).to eql(2)
+      end
     end
 
     it 'health check should be resilient against intermittent errors' do
-      instance5 = double('instance5')
-      expect(instance5).to receive(:health_status).and_raise(StandardError)
-      allow(group).to receive(:auto_scaling_instances){ [ instance5 ] }
-      expect(@driver.send(:healthy_instance_count)).to eql -1
-    end
-
-    context 'when an elb is associated with the auto scaling group' do
-      it 'should not include instances that are HEALTHY but not associated with the elb' do
-        instance_collection = double('instance_collection', :health => [{:instance => ec2_instance1, :state => 'InService'}])
-        load_balancer = double('load_balancer', :instances => instance_collection)
-        allow(group).to receive(:load_balancers) { [load_balancer] }
-        allow(group).to receive(:auto_scaling_instances) { [instance1, instance2] }
-
-        expect(@driver.send(:healthy_instance_count)).to eql 1
-      end
-
-      it 'should only include instances registered with an elb that are InService' do
-        allow(group).to receive(:auto_scaling_instances) { [instance1, instance2, instance3] }
-        instance_collection = double('instance_collection', :health => [{:instance => ec2_instance1, :state => 'InService'},
-                                                                        {:instance => ec2_instance2, :state => 'OutOfService'},
-                                                                        {:instance => ec2_instance3, :state => 'OutOfService'}])
-        load_balancer = double('load_balancer', :instances => instance_collection)
-        allow(group).to receive(:load_balancers) { [load_balancer] }
-
-        expect(@driver.send(:healthy_instance_count)).to eql 1
-      end
-    end
-
-    context 'when there are multiple elbs for an auto scaling group' do
-      it 'should not include instances that are not registered with all load balancers' do
-        instance_collection1 = double('instance_collection1', :health => [{:instance => ec2_instance1, :state => 'InService'}])
-        instance_collection2 = double('instance_collection2', :health => [])
-        load_balancer1 = double('load_balancer1', :instances => instance_collection1)
-        load_balancer2 = double('load_balancer2', :instances => instance_collection2)
-        allow(group).to receive(:load_balancers) { [load_balancer1, load_balancer2] }
-        allow(group).to receive(:auto_scaling_instances) { [instance1] }
-
-        expect(@driver.send(:healthy_instance_count)).to eql 0
-      end
+      expect(@driver).to receive(:healthy_instance_ids).and_raise("Some error")
+      expect(@driver.healthy_instance_count).to eql -1
     end
   end
 
@@ -117,7 +179,7 @@ describe 'Autoscaling group driver' do
       hash = {:max => 5, :min => 2, :desired => 3}
       allow(group).to receive(:auto_scaling_instances){[instance1, instance2, instance3]}
       expect(group).to receive(:update).with({:min_size => 2, :max_size => 5})
-      expect(group).to receive(:set_desired_capacity).with(3)
+      expect(@driver).to receive(:warm_up).with(3)
       @driver.warm_up_cooled_group hash
     end
   end

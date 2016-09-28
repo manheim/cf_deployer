@@ -13,7 +13,7 @@ describe CfDeployer::Driver::AutoScalingGroup do
       end
 
       expect(WebMock).to have_requested(:post, "https://autoscaling.us-east-1.amazonaws.com/").times(5)
-      expect(WebMock).to have_requested(:post, "https://elasticloadbalancing.us-east-1.amazonaws.com/").times(4)
+      expect(WebMock).to have_requested(:post, "https://elasticloadbalancing.us-east-1.amazonaws.com/").times(1)
     end
   end
 end

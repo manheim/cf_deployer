@@ -62,28 +62,41 @@ module CfDeployer
         healthy_instance_count >= desired_capacity
       end
 
-      private
+      def healthy_instance_ids
+        instances = auto_scaling_instances.select do |instance|
+          instance.health_status == 'HEALTHY'
+        end
+        instances.map(&:id)
+      end
+
+      def in_service_instance_ids
+        elbs = load_balancers
+        return [] if elbs.empty?
+
+        ids = elbs.collect(&:instances)
+                  .collect(&:health)
+                  .to_a
+                  .collect { |elb_healths|
+                     elb_healths.select { |health| health[:state] == 'InService' }
+                                .map { |health| health[:instance].id }
+                  }
+
+        ids.inject(:&)
+      end
 
       def healthy_instance_count
         begin
-          count = auto_scaling_instances.count do |instance|
-            instance.health_status == 'HEALTHY' && (load_balancers.empty? || instance_in_service?( instance.ec2_instance ))
-          end
-          Log.info "Healthy instance count: #{count}"
-          count
+          instances = healthy_instance_ids
+          instances &= in_service_instance_ids unless load_balancers.empty?
+          Log.info "Healthy instance count: #{instances.count}"
+          instances.count
         rescue => e
           Log.info "Unable to determine healthy instance count due to error: #{e.message}"
           -1
         end
       end
 
-      def instance_in_service? instance
-        load_balancers.all? do |load_balancer|
-          load_balancer.instances.health.any? do |health|
-            health[:instance] == instance ? health[:state] == 'InService' : false
-          end
-        end
-      end
+      private
 
       def aws_group
         @my_group ||= AWS::AutoScaling.new.groups[group_name]
