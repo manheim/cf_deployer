@@ -64,7 +64,7 @@ module CfDeployer
 
       def healthy_instance_ids
         instances = auto_scaling_instances.select do |instance|
-          instance.health_status == 'HEALTHY'
+          'HEALTHY'.casecmp(instance.health_status) == 0
         end
         instances.map(&:id)
       end
@@ -85,15 +85,15 @@ module CfDeployer
       end
 
       def healthy_instance_count
-        begin
+        AWS.memoize do
           instances = healthy_instance_ids
           instances &= in_service_instance_ids unless load_balancers.empty?
           Log.info "Healthy instance count: #{instances.count}"
           instances.count
-        rescue => e
-          Log.info "Unable to determine healthy instance count due to error: #{e.message}"
-          -1
         end
+      rescue => e
+        Log.info "Unable to determine healthy instance count due to error: #{e.message}"
+        -1
       end
 
       private

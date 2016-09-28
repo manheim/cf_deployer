@@ -12,7 +12,7 @@ describe CfDeployer::Driver::AutoScalingGroup do
         expect(driver.send(:healthy_instance_count)).to equal(4), "Logs: #{logs}"
       end
 
-      expect(WebMock).to have_requested(:post, "https://autoscaling.us-east-1.amazonaws.com/").times(5)
+      expect(WebMock).to have_requested(:post, "https://autoscaling.us-east-1.amazonaws.com/").times(1)
       expect(WebMock).to have_requested(:post, "https://elasticloadbalancing.us-east-1.amazonaws.com/").times(1)
     end
   end

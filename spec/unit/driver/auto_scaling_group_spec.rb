@@ -61,6 +61,13 @@ describe 'Autoscaling group driver' do
 
       expect(@driver.healthy_instance_ids).to eql ['instance1', 'instance2', 'instance4']
     end
+
+    it 'returns the ids of all instances that are healthy (case insensitive)' do
+      instance1 =  double('instance1', :health_status => 'HealThy', id: 'instance1')
+      allow(group).to receive(:auto_scaling_instances){[instance1]}
+
+      expect(@driver.healthy_instance_ids).to eql ['instance1']
+    end
   end
 
   describe '#in_service_instance_ids' do
