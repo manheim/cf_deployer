@@ -92,7 +92,7 @@ module CfDeployer
           instances.count
         end
       rescue => e
-        Log.info "Unable to determine healthy instance count due to error: #{e.message}"
+        Log.error "Unable to determine healthy instance count due to error: #{e.message}"
         -1
       end
 

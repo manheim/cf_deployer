@@ -6,7 +6,7 @@ describe CfDeployer::Driver::AutoScalingGroup do
 
     override_aws_environment(AWS_REGION: 'us-east-1') do
       logs = nil
-      allow(CfDeployer::Log).to receive(:info) { |message| logs = message }
+      allow(CfDeployer::Log).to receive(:error) { |message| logs = message }
       driver = CfDeployer::Driver::AutoScalingGroup.new asg
       VCR.use_cassette("aws_call_count/driver/auto_scaling_group/healthy_instance_count") do
         expect(driver.send(:healthy_instance_count)).to equal(4), "Logs: #{logs}"
