@@ -11,6 +11,10 @@ module CfDeployer
       log.info message
     end
 
+    def self.error(message)
+      log.error message
+    end
+
     def self.log
       return @log if @log
       @log = Logger.new('cf_deployer')

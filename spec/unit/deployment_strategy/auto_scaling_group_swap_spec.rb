@@ -127,6 +127,114 @@ describe 'Auto Scaling Group Swap Deployment Strategy' do
     end
   end
 
+  context 'on deployment failure' do
+    context 'in stack creation' do
+      context 'and only one stack is active' do
+        it 'should not cool down the only available stack' do
+          strategy = create_strategy(blue: :active)
+          error = RuntimeError.new("Error before inactive_stack became active")
+
+          expect(strategy).to receive(:create_inactive_stack).and_raise(error)
+          expect(strategy).to_not receive(:cool_down)
+
+          ignore_errors { strategy.deploy }
+        end
+
+        it 'should report the deployment as a failure' do
+          strategy = create_strategy(blue: :active)
+          error = RuntimeError.new("Error before inactive_stack became active")
+
+          expect(strategy).to receive(:create_inactive_stack).and_raise(error)
+          expect { strategy.deploy }.to raise_error(error)
+        end
+      end
+
+      context 'and both stacks are active' do
+        it 'should cool down inactive stack' do
+          strategy = create_strategy(blue: :active)
+          inactive_stack = strategy.send(:green_stack)
+
+          expect(strategy).to receive(:create_inactive_stack) do
+            activate_stack(inactive_stack)
+            raise RuntimeError.new("Error after inactive_stack became active")
+          end
+
+          expect(strategy).to receive(:cool_down).with(inactive_stack)
+          ignore_errors { strategy.deploy }
+        end
+
+        it 'should report the deployment as a failure' do
+          strategy = create_strategy(blue: :active)
+          inactive_stack = strategy.send(:green_stack)
+          error = RuntimeError.new("Error after inactive_stack became active")
+
+          expect(strategy).to receive(:create_inactive_stack) do
+            activate_stack(inactive_stack)
+            raise error
+          end
+
+          allow(strategy).to receive(:cool_down)
+          expect { strategy.deploy }.to raise_error(error)
+        end
+      end
+    end
+
+    context 'in asg swap' do
+      # This shouldn't be possible - a stack normally becomes active at creation
+      context 'and only one stack is active' do
+        it 'should not cool down the only available stack' do
+          strategy = create_strategy(blue: :active)
+          error = RuntimeError.new("Error during swap")
+
+          # The stack would normally be active after create_inactive_stack
+          allow(strategy).to receive(:create_inactive_stack)
+          expect(strategy).to receive(:swap_group).and_raise(error)
+          expect(strategy).to_not receive(:cool_down)
+
+          ignore_errors { strategy.deploy }
+        end
+
+        it 'should report the deployment as a failure' do
+          strategy = create_strategy(blue: :active)
+          error = RuntimeError.new("Error during swap")
+
+          # The stack would normally be active after create_inactive_stack
+          allow(strategy).to receive(:create_inactive_stack)
+          expect(strategy).to receive(:swap_group).and_raise(error)
+          expect(strategy).to_not receive(:cool_down)
+
+          expect { strategy.deploy }.to raise_error(error)
+        end
+      end
+
+      context 'and both stacks are active' do
+        it 'should cool down inactive stack' do
+          strategy = create_strategy(blue: :active)
+          inactive_stack = strategy.send(:green_stack)
+          error = RuntimeError.new("Error during swap")
+
+          allow(strategy).to receive(:create_inactive_stack) { activate_stack(inactive_stack) }
+          expect(strategy).to receive(:swap_group).and_raise(error)
+          expect(strategy).to receive(:cool_down).with(inactive_stack)
+
+          ignore_errors { strategy.deploy }
+        end
+
+        it 'should report the deployment as a failure' do
+          strategy = create_strategy(blue: :active)
+          inactive_stack = strategy.send(:green_stack)
+          error = RuntimeError.new("Error during swap")
+
+          allow(strategy).to receive(:create_inactive_stack) { activate_stack(inactive_stack) }
+          expect(strategy).to receive(:swap_group).and_raise(error)
+          expect(strategy).to receive(:cool_down).with(inactive_stack)
+
+          expect { strategy.deploy }.to raise_error(error)
+        end
+      end
+    end
+  end
+
   context 'has active group' do
     it 'should deploy blue stack if green stack is active' do
       blue_stack.live!
@@ -306,62 +414,161 @@ describe 'Auto Scaling Group Swap Deployment Strategy' do
   describe '#switch' do
     context 'both stacks are active' do
       it 'should raise an error' do
-        green_stack.live!
-        blue_stack.live!
-        allow(CfDeployer::Driver::AutoScalingGroup).to receive(:new).with('greenASG') { green_asg_driver }
-        allow(CfDeployer::Driver::AutoScalingGroup).to receive(:new).with('blueASG') { blue_asg_driver }
-        allow(green_asg_driver).to receive(:describe) { {desired: 1, min: 1, max: 3 } }
-        allow(blue_asg_driver).to receive(:describe) { {desired: 1, min: 1, max: 3 } }
+        strategy = create_strategy(blue: :active, green: :active)
+        error = 'Found both auto-scaling-groups, ["greenASG", "blueASG"], in green and blue stacks are active. Switch aborted!'
 
-        strategy = CfDeployer::DeploymentStrategy.create(app, env, component, context)
-        expect{strategy.switch}.to raise_error 'Found both auto-scaling-groups, ["greenASG", "blueASG"], in green and blue stacks are active. Switch aborted!'
+        expect { strategy.switch }.to raise_error(error)
       end
     end
 
     context 'both stacks do not exist' do
-      it 'should raise an error' do
-        green_stack.live!
-        blue_stack.die!
-        allow(CfDeployer::Driver::AutoScalingGroup).to receive(:new).with('greenASG') { green_asg_driver }
-        allow(CfDeployer::Driver::AutoScalingGroup).to receive(:new).with('blueASG') { blue_asg_driver }
-        allow(green_asg_driver).to receive(:describe) { {desired: 1, min: 1, max: 3 } }
+      context '(only green exists)' do
+        it 'should raise an error' do
+          strategy = create_strategy(green: :active, blue: :dead)
+          error = 'Only one color stack exists, cannot switch to a non-existent version!'
 
-        strategy = CfDeployer::DeploymentStrategy.create(app, env, component, context)
-        expect{ strategy.switch }.to raise_error 'Only one color stack exists, cannot switch to a non-existent version!'
+          expect { strategy.switch }.to raise_error(error)
+        end
+      end
+
+      context '(only blue exists)' do
+        it 'should raise an error' do
+          strategy = create_strategy(green: :dead, blue: :active)
+          error = 'Only one color stack exists, cannot switch to a non-existent version!'
+
+          expect { strategy.switch }.to raise_error(error)
+        end
       end
     end
 
     context 'green stack is active' do
+      let(:strategy) { create_strategy(green: :active, blue: :inactive) }
+
       it 'should warm up blue stack and cool down green stack' do
-        green_stack.live!
-        blue_stack.live!
-        allow(CfDeployer::Driver::AutoScalingGroup).to receive(:new).with('blueASG') { blue_asg_driver }
-        allow(CfDeployer::Driver::AutoScalingGroup).to receive(:new).with('greenASG') { green_asg_driver }
-        options = {desired: 5, min: 3, max: 7}
-        allow(green_asg_driver).to receive(:describe) {options}
-        allow(blue_asg_driver).to receive(:describe) {{desired: 0, min: 0, max: 0}}
+        active_stack = strategy.send(:green_stack)
+        inactive_stack = strategy.send(:blue_stack)
 
-        expect(blue_asg_driver).to receive(:warm_up_cooled_group).with(options)
-        expect(green_asg_driver).to receive(:cool_down)
+        expect(strategy).to receive(:warm_up_stack).with(inactive_stack, active_stack, true)
+        expect(strategy).to receive(:cool_down).with(active_stack)
 
-        strategy = CfDeployer::DeploymentStrategy.create(app, env, component, context)
         strategy.switch
+      end
+
+      context 'swap fails' do
+        context 'before blue stack becomes active' do
+          let(:error) { 'Error before inactive stack becomes active' }
+
+          it 'does not cool down any stack' do
+            expect(strategy).to receive(:warm_up_stack).and_raise(error)
+            expect(strategy).to_not receive(:cool_down)
+
+            ignore_errors { strategy.switch }
+          end
+
+          it 'reports the switch as a failure' do
+            expect(strategy).to receive(:warm_up_stack).and_raise(error)
+            allow(strategy).to receive(:cool_down)
+
+            expect { strategy.switch }.to raise_error(error)
+          end
+        end
+
+        context 'after both stacks became active' do
+          let(:error) { 'Error after inactive stack becomes active ' }
+
+          it 'cools down the blue stack' do
+            expect(strategy).to receive(:warm_up_stack) do
+              expect(strategy).to receive(:both_stacks_active?).and_return(true)
+              raise error
+            end
+
+            inactive_stack = strategy.send(:blue_stack)
+            expect(strategy).to receive(:cool_down).with(inactive_stack)
+
+            ignore_errors { strategy.switch }
+          end
+
+          it 'reports the switch as a failure' do
+            expect(strategy).to receive(:warm_up_stack) do
+              expect(strategy).to receive(:both_stacks_active?).and_return(true)
+              raise error
+            end
+
+            expect { strategy.switch }.to raise_error(error)
+          end
+        end
+      end
+    end
+
+    context 'blue stack is active' do
+      let(:strategy) { create_strategy(green: :inactive, blue: :active) }
+
+      it 'should warm up green stack and cool down blue stack' do
+        active_stack = strategy.send(:blue_stack)
+        inactive_stack = strategy.send(:green_stack)
+
+        expect(strategy).to receive(:warm_up_stack).with(inactive_stack, active_stack, true)
+        expect(strategy).to receive(:cool_down).with(active_stack)
+
+        strategy.switch
+      end
+
+      context 'swap fails' do
+        context 'before green stack becomes active' do
+          let(:error) { 'Error before inactive stack becomes active' }
+
+          it 'does not cool down any stack' do
+            expect(strategy).to receive(:warm_up_stack).and_raise(error)
+            expect(strategy).to_not receive(:cool_down)
+
+            ignore_errors { strategy.switch }
+          end
+
+          it 'reports the switch as a failure' do
+            expect(strategy).to receive(:warm_up_stack).and_raise(error)
+            allow(strategy).to receive(:cool_down)
+
+            expect { strategy.switch }.to raise_error(error)
+          end
+        end
+
+        context 'after both stacks become active' do
+          let(:error) { 'Error after inactive stack becomes active ' }
+
+          it 'cools down the green stack' do
+            expect(strategy).to receive(:warm_up_stack) do
+              expect(strategy).to receive(:both_stacks_active?).and_return(true)
+              raise error
+            end
+
+            inactive_stack = strategy.send(:green_stack)
+            expect(strategy).to receive(:cool_down).with(inactive_stack)
+
+            ignore_errors { strategy.switch }
+          end
+
+          it 'reports the switch as a failure' do
+            expect(strategy).to receive(:warm_up_stack) do
+              expect(strategy).to receive(:both_stacks_active?).and_return(true)
+              raise error
+            end
+
+            expect { strategy.switch }.to raise_error(error)
+          end
+        end
       end
     end
   end
 
-  context '#cool_down_active_stack' do
+  context '#cool_down' do
     it 'should cool down only those ASGs which actually exist' do
       blue_stack.live!
-      green_stack.die!
-      allow(CfDeployer::Driver::AutoScalingGroup).to receive(:new).with('greenASG') { green_asg_driver }
       allow(CfDeployer::Driver::AutoScalingGroup).to receive(:new).with('blueASG') { blue_asg_driver }
-      allow(green_asg_driver).to receive(:describe) { {desired: 0, min: 0, max: 0 } }
       allow(blue_asg_driver).to receive(:describe) { {desired: 1, min: 1, max: 3 } }
 
       strategy = CfDeployer::DeploymentStrategy.create(app, env, component, context)
       expect(blue_asg_driver).to receive(:cool_down)
-      strategy.send(:cool_down_active_stack)
+      strategy.send(:cool_down, blue_stack)
     end
   end
 
@@ -487,5 +694,67 @@ describe 'Auto Scaling Group Swap Deployment Strategy' do
       asg_swap = CfDeployer::DeploymentStrategy.create(app, env, component, context)
       asg_swap.send(:stack_active?, blue_stack).should be(true)
     end
+  end
+
+  def default_options
+    {
+      app_name: 'app',
+      environment: 'environment',
+      component: 'component',
+      context: {
+        :'deployment-strategy' => 'auto-scaling-group-swap',
+        :settings => {
+          :'auto-scaling-group-name-output' => ['AutoScalingGroupID']
+        }
+      }
+    }
+  end
+
+  def create_strategy original_options = {}
+    options = default_options.merge(original_options)
+
+    create_stack(:blue, options.delete(:blue) || :dead, options)
+    create_stack(:green, options.delete(:green) || :dead, options)
+
+    CfDeployer::DeploymentStrategy.create(options[:app_name], options[:environment], options[:component], options[:context])
+  end
+
+  def create_stack color, status = :active, original_options = {}
+    options = default_options.merge(original_options)
+
+    stack = Fakes::Stack.new(name: color.to_s, outputs: {'web-elb-name' => "#{color}-elb"}, parameters: { name: color.to_s})
+
+    stack_color_name = (color.to_s == 'green' ? 'G' : 'B')
+    stack_name = "#{options[:app_name]}-#{options[:environment]}-#{options[:component]}-#{stack_color_name}"
+    allow(CfDeployer::Stack).to receive(:new).with(stack_name, options[:component], options[:context]).and_return(stack)
+
+    stack.tap do
+      case status
+      when :active; activate_stack(stack)
+      when :inactive; activate_stack(stack, { desired: 0, max: 0, min: 0 })
+      when :dead; kill_stack(stack)
+      else raise "Trying to create stack with unknown status; #{status}"
+      end
+    end
+  end
+
+  def activate_stack stack, instances = {}
+    stack.live!
+
+    allow(stack).to receive(:output).with('AutoScalingGroupID').and_return("#{stack.name}ASG")
+    allow(stack).to receive(:find_output).with('AutoScalingGroupID').and_return("#{stack.name}ASG")
+    allow(stack).to receive(:resource_statuses).and_return(asg_ids("#{stack.name}ASG"))
+
+    asg_driver = double("#{stack.name}_asg_driver")
+    instances[:desired] ||= 2
+    instances[:min] ||= 1
+    instances[:max] ||= 5
+
+    allow(asg_driver).to receive(:describe).and_return(instances)
+    allow(CfDeployer::Driver::AutoScalingGroup).to receive(:new).with("#{stack.name}ASG") { asg_driver }
+  end
+
+  def kill_stack stack
+    stack.die!
   end
 end

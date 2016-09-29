@@ -2,12 +2,25 @@ module CfDeployer
   module DeploymentStrategy
     class AutoScalingGroupSwap < BlueGreen
 
+      def cool_inactive_on_failure
+        yield
+      rescue => e
+        if both_stacks_active?
+          Log.error "Deployment failed - #{e.message} - and both stacks are active.  Cooling down failed stack.  Look into the failure, and try your deployment again."
+          cool_down(inactive_stack)
+        end
+
+        raise e
+      end
+
       def deploy
         check_blue_green_not_both_active 'Deployment'
         Log.info "Found active stack #{active_stack.name}" if active_stack
         delete_stack inactive_stack
-        create_inactive_stack
-        swap_group
+        cool_inactive_on_failure do
+          create_inactive_stack
+          swap_group
+        end
         run_hook(:'after-swap')
         Log.info "Active stack has been set to #{inactive_stack.name}"
         delete_stack(active_stack) if active_stack && !keep_previous_stack
@@ -23,7 +36,7 @@ module CfDeployer
       def switch
         check_blue_green_not_both_active 'Switch'
         raise ApplicationError.new('Only one color stack exists, cannot switch to a non-existent version!') unless both_stacks_exist?
-        swap_group true
+        cool_inactive_on_failure { swap_group true }
       end
 
       private
@@ -35,7 +48,7 @@ module CfDeployer
 
       def swap_group is_switching_to_cooled = false
         is_switching_to_cooled ? warm_up_cooled_stack : warm_up_inactive_stack
-        cool_down_active_stack if active_stack && (is_switching_to_cooled || keep_previous_stack)
+        cool_down(active_stack) if active_stack && (is_switching_to_cooled || keep_previous_stack)
       end
 
       def keep_previous_stack
@@ -56,8 +69,8 @@ module CfDeployer
         warm_up_stack(inactive_stack, active_stack, true)
       end
 
-      def cool_down_active_stack
-        get_active_asgs(active_stack).each do |id|
+      def cool_down stack
+        get_active_asgs(stack).each do |id|
           asg_driver(id).cool_down
         end
       end
