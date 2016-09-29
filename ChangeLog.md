@@ -61,3 +61,4 @@ version 1.5.0
 unreleased
   - Improve warm up for AutoScalingGroup based deployments (See: https://github.com/manheim/cf_deployer/issues/32)
   - Automatically rollback on failures for AutoScalingGroup based deployments (See: https://github.com/manheim/cf_deployer/issues/39)
+  - Improve error message when no stack is exists on ASG-based switch (See: https://github.com/manheim/cf_deployer/issues/50)
