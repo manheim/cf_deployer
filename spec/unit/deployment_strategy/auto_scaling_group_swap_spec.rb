@@ -422,10 +422,11 @@ describe 'Auto Scaling Group Swap Deployment Strategy' do
     end
 
     context 'both stacks do not exist' do
+      let(:error) { 'Both stacks must exist to switch.' }
+
       context '(only green exists)' do
         it 'should raise an error' do
           strategy = create_strategy(green: :active, blue: :dead)
-          error = 'Only one color stack exists, cannot switch to a non-existent version!'
 
           expect { strategy.switch }.to raise_error(error)
         end
@@ -434,7 +435,14 @@ describe 'Auto Scaling Group Swap Deployment Strategy' do
       context '(only blue exists)' do
         it 'should raise an error' do
           strategy = create_strategy(green: :dead, blue: :active)
-          error = 'Only one color stack exists, cannot switch to a non-existent version!'
+
+          expect { strategy.switch }.to raise_error(error)
+        end
+      end
+
+      context '(no stack exists)' do
+        it 'should raise an error' do
+          strategy = create_strategy(green: :dead, blue: :dead)
 
           expect { strategy.switch }.to raise_error(error)
         end
