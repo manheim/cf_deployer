@@ -122,7 +122,8 @@ module CfDeployer
       Log.info "Updating stack #{@stack_name}..."
       args = {
         :capabilities => capabilities,
-        :parameters => params
+        :parameters => params,
+        :tags => reformat_tags(tags),
       }
       unless override_policy_json.nil?
         args[:stack_policy_during_update_body] = override_policy_json

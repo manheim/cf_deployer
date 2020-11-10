@@ -65,7 +65,9 @@ describe CfDeployer::Stack do
       allow(@cf_driver).to receive(:stack_status) { :create_complete }
       expected_opt = {
         :capabilities => [],
-        :parameters => {:foo => 'bar'}
+        :parameters => {:foo => 'bar'},
+        :tags => [{'Key' => 'app', 'Value' => 'app1'},
+                  {'Key' => 'env', 'Value' => 'dev'}]
       }
       expect(@cf_driver).to receive(:update_stack).with(template, expected_opt)
       stack = CfDeployer::Stack.new('test','web', @config)
@@ -79,7 +81,9 @@ describe CfDeployer::Stack do
       allow(@cf_driver).to receive(:stack_status) { :create_complete }
       expected_opt = {
         :capabilities => [],
-        :parameters => {:foo => 'bar'}
+        :parameters => {:foo => 'bar'},
+        :tags => [{'Key' => 'app', 'Value' => 'app1'},
+                  {'Key' => 'env', 'Value' => 'dev'}]
       }
       expect(@cf_driver).to receive(:update_stack).with(template, expected_opt).and_return(true)
       stack = CfDeployer::Stack.new('test','web', @config)
@@ -94,7 +98,9 @@ describe CfDeployer::Stack do
       allow(@cf_driver).to receive(:stack_status) { :create_complete }
       expected_opt = {
         :capabilities => [],
-        :parameters => {:foo => 'bar'}
+        :parameters => {:foo => 'bar'},
+        :tags => [{'Key' => 'app', 'Value' => 'app1'},
+                  {'Key' => 'env', 'Value' => 'dev'}]
       }
       expect(@cf_driver).to receive(:update_stack).with(template, expected_opt).and_return(false)
       stack = CfDeployer::Stack.new('test','web', @config)
@@ -109,7 +115,9 @@ describe CfDeployer::Stack do
       allow(@cf_driver).to receive(:stack_status) { :update_rollback_complete }
       expected_opt = {
         :capabilities => [],
-        :parameters => {:foo => 'bar'}
+        :parameters => {:foo => 'bar'},
+        :tags => [{'Key' => 'app', 'Value' => 'app1'},
+                  {'Key' => 'env', 'Value' => 'dev'}]
       }
       expect(@cf_driver).to receive(:update_stack).with(template, expected_opt).and_return(false)
       stack = CfDeployer::Stack.new('test','web', @config)
@@ -127,6 +135,8 @@ describe CfDeployer::Stack do
       expected_opt = {
         :capabilities => [],
         :parameters => {:foo => 'bar'},
+        :tags => [{'Key' => 'app', 'Value' => 'app1'},
+                  {'Key' => 'env', 'Value' => 'dev'}],
         :stack_policy_during_update_body => override_policy
       }
       expect(@cf_driver).to receive(:update_stack).with(template, expected_opt)
