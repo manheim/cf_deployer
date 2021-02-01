@@ -14,15 +14,16 @@ module CfDeployer
 
       def status
         instance_info = { }
-        [:status, :public_ip_address, :private_ip_address, :image_id].each do |stat|
+        [:public_ip_address, :private_ip_address, :image_id].each do |stat|
           instance_info[stat] = aws_instance.send(stat)
         end
+        instance_info[:status] = aws_instance.state
         instance_info[:key_pair] = aws_instance.key_pair.name
         instance_info
       end
 
       def aws_instance
-        @instance_obj ||= AWS::EC2.new.instances[@id]
+        @instance_obj ||= Aws::EC2::Instance.new(@id)
       end
     end
   end

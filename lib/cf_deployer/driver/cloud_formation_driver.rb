@@ -7,7 +7,7 @@ module CfDeployer
       end
 
       def stack_exists?
-        aws_stack.exists?
+        !aws_stack.nil?
       end
 
       def create_stack template, opts
@@ -22,25 +22,25 @@ module CfDeployer
             aws_stack.update opts.merge(:template => template)
           end
 
-        rescue AWS::CloudFormation::Errors::ValidationError => e
-          if e.message =~ /No updates are to be performed/
-            Log.info e.message
-            return false
-          else
-            raise
-          end
+        rescue Aws::CloudFormation::Errors::AlreadyExistsException => e
+          Log.info e.message
+          return false
+        rescue => e
+          puts '*' * 80
+          puts e
+          raise
         end
 
         return !CfDeployer::Driver::DryRun.enabled?
       end
 
       def stack_status
-        aws_stack.status.downcase.to_sym
+        aws_stack.stack_status.downcase.to_sym
       end
 
       def outputs
         aws_stack.outputs.inject({}) do |memo, o|
-          memo[o.key] = o.value
+          memo[o.output_key] = o.output_value
           memo
         end
       end
@@ -50,8 +50,8 @@ module CfDeployer
       end
 
       def query_output key
-        output = aws_stack.outputs.find { |o| o.key == key }
-        output && output.value
+        output = aws_stack.outputs.find { |o| o.output_key == key }
+        output && output.output_value
       end
 
       def delete_stack
@@ -66,7 +66,7 @@ module CfDeployer
 
       def resource_statuses
         resources = {}
-        aws_stack.resource_summaries.each do |rs|
+        cloud_formation.list_stack_resources(stack_name: @stack_name).stack_resource_summaries.each do |rs|
           resources[rs[:resource_type]] ||= {}
           resources[rs[:resource_type]][rs[:physical_resource_id]] = rs[:resource_status]
         end
@@ -80,14 +80,13 @@ module CfDeployer
       private
 
       def cloud_formation
-        AWS::CloudFormation.new
+        Aws::CloudFormation::Client.new
       end
 
       def aws_stack
-        cloud_formation.stacks[@stack_name]
+        cloud_formation.describe_stacks.stacks.find{|s| s.stack_name == @stack_name}
       end
 
     end
-
   end
 end

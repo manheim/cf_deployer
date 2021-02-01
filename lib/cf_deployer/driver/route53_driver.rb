@@ -2,7 +2,7 @@ module CfDeployer
   module Driver
     class Route53
       def initialize(aws_route53 = nil)
-        @aws_route53 = aws_route53 || AWS::Route53.new
+        @aws_route53 = aws_route53 || Aws::Route53.new
       end
 
       def find_alias_target(hosted_zone_name, target_host_name)

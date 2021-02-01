@@ -10,7 +10,7 @@ module CfDeployer
 
     def initialize(stack_name, component, context)
       @stack_name = stack_name
-      @cf_driver = context[:cf_driver] || CfDeployer::Driver::CloudFormation.new(stack_name)
+      @cf_driver = context[:cf_driver] #|| CfDeployer::Driver::CloudFormation.new(stack_name)
       @context = context
       @component = component
     end
@@ -56,7 +56,12 @@ module CfDeployer
     def find_output key
       begin
         @cf_driver.query_output(key)
-      rescue AWS::CloudFormation::Errors::ValidationError => e
+      rescue Aws::CloudFormation::Errors::OperationStatusCheckFailedException => e
+        raise ResourceNotInReadyState.new("Resource stack not in ready state yet, perhaps you should provision it first?")
+      rescue => e
+        puts '*' * 80
+        puts e
+        puts '*' * 80
         raise ResourceNotInReadyState.new("Resource stack not in ready state yet, perhaps you should provision it first?")
       end
     end
@@ -88,7 +93,7 @@ module CfDeployer
     end
 
     def resource_statuses
-      AWS.memoize do
+      # Aws.memoize do
         resources = @cf_driver.resource_statuses.merge( { :asg_instances => {}, :instances => {} } )
         if resources['AWS::AutoScaling::AutoScalingGroup']
           resources['AWS::AutoScaling::AutoScalingGroup'].keys.each do |asg_name|
@@ -101,7 +106,7 @@ module CfDeployer
           end
         end
         resources
-      end
+      # end
     end
 
     def name
@@ -167,12 +172,12 @@ module CfDeployer
           begin
             Log.info "current status: #{stack_status}"
             sleep 15
-          rescue AWS::CloudFormation::Errors::ValidationError => e
-            if e.message =~ /does not exist/
-              break # This is what we wanted anyways
-            else
-              raise e
-            end
+          rescue Aws::CloudFormation::Errors::StackSetNotFoundException => e
+            break # This is what we wanted anyway
+          rescue => e
+            puts '*' * 80
+            puts e
+            raise e
           end
         end
       }

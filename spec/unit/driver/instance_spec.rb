@@ -11,14 +11,9 @@ describe CfDeployer::Driver::Instance do
                  }
 
 
-      aws = double AWS::EC2
-      expect(AWS::EC2).to receive(:new) { aws }
-
-      instance_collection = double AWS::EC2::InstanceCollection
-      expect(aws).to receive(:instances) { instance_collection }
-
       instance = Fakes::Instance.new expected.merge( { :id => 'i-wxyz1234' } )
-      expect(instance_collection).to receive(:[]).with(instance.id) { instance }
+      allow(instance).to receive(:state) { :pending }
+      expect(Aws::EC2::Instance).to receive(:new).with('i-wxyz1234') { instance }
 
       instance_status = CfDeployer::Driver::Instance.new('i-wxyz1234').status
 

@@ -2,8 +2,8 @@ require 'spec_helper'
 
 describe 'CloudFormation' do
   let(:outputs) { [output1, output2] }
-  let(:output1) { double('output1', :key => 'key1', :value => 'value1')}
-  let(:output2) { double('output2', :key => 'key2', :value => 'value2')}
+  let(:output1) { double('output1', :output_key => 'key1', :output_value => 'value1')}
+  let(:output2) { double('output2', :output_key => 'key2', :output_value => 'value2')}
   let(:parameters) { double('parameters')}
   let(:resource_summaries) { [
       {
@@ -22,16 +22,17 @@ describe 'CloudFormation' do
           :resource_status => 'STATUS_2'
       }
   ] }
-  let(:stack) { double('stack', :outputs => outputs, :parameters => parameters, :resource_summaries => resource_summaries) }
+  let(:stack) { double('stack', :stack_name => 'testStack', :outputs => outputs, :parameters => parameters) }
+  let(:cloudFormationStacks) { [stack] }
   let(:cloudFormation) {
     double('cloudFormation',
-           :stacks =>
-           {'testStack' => stack
-           })
+      :describe_stacks => double(:stacks => cloudFormationStacks),
+      :list_stack_resources => double(:stack_resource_summaries => resource_summaries)
+    )
   }
 
   before(:each) do
-    allow(AWS::CloudFormation).to receive(:new) { cloudFormation }
+    allow(Aws::CloudFormation::Client).to receive(:new) { cloudFormation }
   end
 
   it 'should get outputs of stack' do
@@ -65,7 +66,7 @@ describe 'CloudFormation' do
 
     it 'returns false if no updates were performed (because no difference in template)' do
       cloud_formation = CfDeployer::Driver::CloudFormation.new 'my_stack'
-      expect(cloud_formation).to receive(:aws_stack).and_raise(AWS::CloudFormation::Errors::ValidationError.new('No updates are to be performed'))
+      expect(cloud_formation).to receive(:aws_stack).and_raise(Aws::CloudFormation::Errors::AlreadyExistsException.new(nil, 'No updates are to be performed'))
       result = nil
 
       CfDeployer::Driver::DryRun.disable_for do

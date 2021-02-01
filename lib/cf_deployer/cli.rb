@@ -94,9 +94,9 @@ module CfDeployer
       def set_log_level
         if options[:'log-level'] == 'aws-debug'
           CfDeployer::Log.level = 'debug'
-          AWS.config :logger => Logger.new($stdout)
+          # AWS.config :logger => Logger.new($stdout)
         else
-          CfDeployer::Log.level = options[:'log-level']
+          # CfDeployer::Log.level = options[:'log-level']
         end
       end
 

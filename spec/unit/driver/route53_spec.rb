@@ -6,7 +6,7 @@ describe CfDeployer::Driver::Route53 do
   describe ".find_alias_target" do
     it "should raise an error when the target zone cannot be found" do
       route53 = double('route53')
-      allow(AWS::Route53).to receive(:new) { route53 }
+      allow(Aws::Route53).to receive(:new) { route53 }
 
       allow(route53).to receive(:hosted_zones) { [] }
 
@@ -19,7 +19,7 @@ describe CfDeployer::Driver::Route53 do
       allow(zone).to receive(:resource_record_sets) { [] }
 
       route53 = double('route53')
-      allow(AWS::Route53).to receive(:new) { route53 }
+      allow(Aws::Route53).to receive(:new) { route53 }
       allow(route53).to receive(:hosted_zones) { [zone] }
 
       subject.find_alias_target('target.com', 'foo').should be_nil
@@ -29,7 +29,7 @@ describe CfDeployer::Driver::Route53 do
       host = double('host', :name => 'foo.target.com.', :alias_target => { :dns_name => 'abc.com.'})
       zone = double('zone', :name => 'target.com.', :resource_record_sets => [host])
       route53 = double('route53', :hosted_zones => [zone])
-      allow(AWS::Route53).to receive(:new) { route53 }
+      allow(Aws::Route53).to receive(:new) { route53 }
 
       subject.find_alias_target('Target.com', 'Foo.target.com').should eq('abc.com')
     end
@@ -38,7 +38,7 @@ describe CfDeployer::Driver::Route53 do
       host = double('host', :name => 'foo.target.com.', :alias_target => nil)
       zone = double('zone', :name => 'target.com.', :resource_record_sets => [host])
       route53 = double('route53', :hosted_zones => [zone])
-      allow(AWS::Route53).to receive(:new) { route53 }
+      allow(Aws::Route53).to receive(:new) { route53 }
 
       subject.find_alias_target('target.com', 'foo.target.com').should be_nil
     end
@@ -47,7 +47,7 @@ describe CfDeployer::Driver::Route53 do
       host = double('host', :name => 'foo.target.com.', :alias_target => { :dns_name => 'abc.com.'})
       zone = double('zone', :name => 'target.com.', :resource_record_sets => [host])
       route53 = double('route53', :hosted_zones => [zone])
-      allow(AWS::Route53).to receive(:new) { route53 }
+      allow(Aws::Route53).to receive(:new) { route53 }
 
       subject.find_alias_target('target.com.', 'foo.target.com.').should eq('abc.com')
     end
@@ -57,7 +57,7 @@ describe CfDeployer::Driver::Route53 do
   describe ".set_alias_target" do
     it "should raise an error when the target-zone cannot be found" do
       route53 = double('route53')
-      allow(AWS::Route53).to receive(:new) { route53 }
+      allow(Aws::Route53).to receive(:new) { route53 }
 
       allow(route53).to receive(:hosted_zones) { [] }
 

@@ -9,7 +9,14 @@ Gem::Specification.new do |gem|
   gem.homepage      = "http://github.com/manheim/cf_deployer"
   gem.license = 'MIT'
 
-  gem.add_runtime_dependency 'aws-sdk','1.44.0'
+  gem.add_runtime_dependency 'json','~> 1.8'
+  # gem.add_runtime_dependency 'aws-sdk','1.44.0'
+  gem.add_runtime_dependency 'aws-sdk-autoscaling'
+  gem.add_runtime_dependency 'aws-sdk-core','~> 3.0'
+  gem.add_runtime_dependency 'aws-sdk-cloudformation', '~> 1.46'
+  gem.add_runtime_dependency 'aws-sdk-ec2'
+  gem.add_runtime_dependency 'aws-sdk-elasticloadbalancing'
+  gem.add_runtime_dependency 'aws-sdk-route53'
   gem.add_runtime_dependency 'log4r'
   gem.add_runtime_dependency 'thor'
   gem.add_runtime_dependency 'rainbow'
@@ -20,6 +27,7 @@ Gem::Specification.new do |gem|
   gem.add_development_dependency 'rake', '~> 10.3.0'
   gem.add_development_dependency 'webmock', '~> 2.1.0'
   gem.add_development_dependency 'vcr', '~> 2.9.3'
+  gem.add_development_dependency 'byebug'
 
   gem.files         = `git ls-files`.split($\).reject {|f| f =~ /^samples\// }
   gem.executables   = gem.files.grep(%r{^bin/}).map{ |f| File.basename(f) }
