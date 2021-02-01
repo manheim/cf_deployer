@@ -36,11 +36,11 @@ describe 'CloudFormation' do
   end
 
   it 'should get outputs of stack' do
-    CfDeployer::Driver::CloudFormation.new('testStack').outputs.should eq({'key1' => 'value1', 'key2' => 'value2'})
+    expect(CfDeployer::Driver::CloudFormation.new('testStack').outputs).to eq({'key1' => 'value1', 'key2' => 'value2'})
   end
 
   it 'should get parameters of stack' do
-    CfDeployer::Driver::CloudFormation.new('testStack').parameters.should eq(parameters)
+    expect(CfDeployer::Driver::CloudFormation.new('testStack').parameters).to eq(parameters)
   end
 
   context 'update_stack' do
@@ -61,7 +61,7 @@ describe 'CloudFormation' do
         result = cloud_formation.update_stack :template, {}
       end
 
-      expect(result).to be_false
+      expect(result).to be_falsey
     end
 
     it 'returns false if no updates were performed (because no difference in template)' do
@@ -73,7 +73,7 @@ describe 'CloudFormation' do
         result = cloud_formation.update_stack :template, {}
       end
 
-      expect(result).to be_false
+      expect(result).to be_falsey
     end
 
     it 'returns true when updates are performed' do
@@ -86,7 +86,7 @@ describe 'CloudFormation' do
         result = cloud_formation.update_stack :template, {}
       end
 
-      expect(result).to be_true
+      expect(result).to be_truthy
     end
 
   end
@@ -103,7 +103,7 @@ describe 'CloudFormation' do
           }
       }
 
-      CfDeployer::Driver::CloudFormation.new('testStack').resource_statuses.should eq(expected)
+      expect(CfDeployer::Driver::CloudFormation.new('testStack').resource_statuses).to eq(expected)
     end
   end
 end

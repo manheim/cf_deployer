@@ -168,7 +168,7 @@ describe CfDeployer::Stack do
   context '#output' do
     it 'should get output value' do
       expect(@cf_driver).to receive(:query_output).with('mykey'){ 'myvalue'}
-      @stack.output('mykey').should eq('myvalue')
+      expect(@stack.output('mykey')).to eq('myvalue')
     end
 
     it 'should get error if output is empty' do
@@ -180,12 +180,12 @@ describe CfDeployer::Stack do
   context '#find_output' do
     it 'should get output value' do
       expect(@cf_driver).to receive(:query_output).with('mykey'){ 'myvalue'}
-      @stack.find_output('mykey').should eq('myvalue')
+      expect(@stack.find_output('mykey')).to eq('myvalue')
     end
 
     it 'should return nil for non-existent value' do
       expect(@cf_driver).to receive(:query_output).with('mykey'){ nil }
-      @stack.find_output('mykey').should be(nil)
+      expect(@stack.find_output('mykey')).to be(nil)
     end
   end
 
@@ -220,14 +220,14 @@ describe CfDeployer::Stack do
       allow(@stack).to receive(:exists?).and_return(true, true)
       allow(@stack).to receive(:stack_status).and_raise(Aws::CloudFormation::Errors::StackSetNotFoundException.new(nil, 'the stack does not exist'))
       expect(@cf_driver).to receive(:delete_stack)
-      expect {@stack.delete}.not_to raise_error
+      expect {@stack.delete}.not_to raise_error(NameError)
     end
 
     it 'should raise an error if a validation error is thrown not about stack does not exist' do
       allow(@stack).to receive(:exists?).and_return(true, true)
       allow(@stack).to receive(:stack_status).and_raise(Aws::CloudFormation::Errors::InvalidOperationException.new(nil, 'I am an error'))
       expect(@cf_driver).to receive(:delete_stack)
-      expect {@stack.delete}.to raise_error
+      expect {@stack.delete}.to raise_error(Aws::CloudFormation::Errors::InvalidOperationException)
     end
   end
 

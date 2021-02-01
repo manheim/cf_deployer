@@ -67,8 +67,8 @@ describe CfDeployer::Hook do
   it 'should catch SyntaxError during eval and show nicer output' do
     context = { app: 'myApp' }
     the_hook = CfDeployer::Hook.new('MyHook', "puts 'hello")
-    the_hook.should_receive :error_document
-    expect { the_hook.run(context) }.to raise_error
+    expect(the_hook).to receive(:error_document)
+    expect { the_hook.run(context) }.to raise_error(SyntaxError)
   end
 
   it 'should catch NoMethodError during eval and show nicer output' do

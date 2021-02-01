@@ -66,7 +66,7 @@ describe CfDeployer::DeploymentStrategy::CnameSwap do
       end
       expect(dns_driver).to receive(:delete_record_set).with('foobar.com', 'test.foobar.com')
       cname_swap.destroy
-      @log.should eq('green deleted.blue deleted.')
+      expect(@log).to eq('green deleted.blue deleted.')
     end
   end
 
@@ -188,19 +188,19 @@ describe CfDeployer::DeploymentStrategy::CnameSwap do
       blue_stack.die!
       green_stack.die!
       cname_swap = CfDeployer::DeploymentStrategy.create('myapp', 'dev', 'web', @context)
-      cname_swap.exists?.should be_false
+      expect(cname_swap.exists?).to be_falsey
     end
 
     it 'yes, if green stack exists and blue stack does not' do
       blue_stack.die!
       cname_swap = CfDeployer::DeploymentStrategy.create('myapp', 'dev', 'web', @context)
-      cname_swap.exists?.should be_true
+      expect(cname_swap.exists?).to be_truthy
     end
 
     it 'yes, if blue stack exists and green stack does not' do
       green_stack.die!
       cname_swap = CfDeployer::DeploymentStrategy.create('myapp', 'dev', 'web', @context)
-      cname_swap.exists?.should be_true
+      expect(cname_swap.exists?).to be_truthy
     end
   end
 
@@ -220,7 +220,7 @@ describe CfDeployer::DeploymentStrategy::CnameSwap do
       my_context.delete :dns_driver
       my_context[:settings][:'dns-driver'] = 'CfDeployer::Driver::Verisign'
       cname_swap = CfDeployer::DeploymentStrategy.create('myapp', 'dev', 'web', my_context)
-      cname_swap.send(:dns_driver).class.to_s.should eq(my_context[:settings][:'dns-driver'])
+      expect(cname_swap.send(:dns_driver).class.to_s).to eq(my_context[:settings][:'dns-driver'])
     end
   end
 
@@ -283,14 +283,14 @@ describe CfDeployer::DeploymentStrategy::CnameSwap do
 
     it 'should get stack output if active stack exists' do
       allow(dns_driver).to receive(:find_alias_target).with('foobar.com', 'test.foobar.com'){ 'BLUE-elb.aws.amazon.com' }
-       cname_swap = CfDeployer::DeploymentStrategy.create('myapp', 'dev', 'web', @context)
-      cname_swap.output_value("AutoScalingGroupID").should eq("blueASG")
+      cname_swap = CfDeployer::DeploymentStrategy.create('myapp', 'dev', 'web', @context)
+      expect(cname_swap.output_value("AutoScalingGroupID")).to eq("blueASG")
     end
 
     it 'should get the information where the value comes from if the active stack does not exist' do
       allow(dns_driver).to receive(:find_alias_target).with('foobar.com', 'test.foobar.com'){ '' }
-       cname_swap = CfDeployer::DeploymentStrategy.create('myapp', 'dev', 'web', @context)
-      cname_swap.output_value(:a_key).should eq("The value will be referenced from the output a_key of undeployed component web")
+      cname_swap = CfDeployer::DeploymentStrategy.create('myapp', 'dev', 'web', @context)
+      expect(cname_swap.output_value(:a_key)).to eq("The value will be referenced from the output a_key of undeployed component web")
     end
   end
 end

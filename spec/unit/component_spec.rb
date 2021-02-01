@@ -98,7 +98,7 @@ describe "component" do
 
   it "should ask strategy if component exists" do
      expect(@strategy).to receive(:exists?){ true }
-     @web.exists?.should eq(true)
+     expect(@web.exists?).to eq(true)
   end
 
   it "should find direct dependencies" do
@@ -106,7 +106,7 @@ describe "component" do
     base = CfDeployer::Component.new('myApp', 'uat', 'base', {})
     web.dependencies << base
 
-    web.depends_on?(base).should eq(true)
+    expect(web.depends_on?(base)).to eq(true)
   end
 
   it "should find transitive dependencies" do
@@ -117,7 +117,7 @@ describe "component" do
     haproxy.dependencies << base
     web.dependencies << haproxy
 
-    web.depends_on?(base).should eq(true)
+    expect(web.depends_on?(base)).to eq(true)
   end
 
   it "should find cyclic dependency" do
