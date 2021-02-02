@@ -35,7 +35,7 @@ module CfDeployer
       end
 
       def stack_status
-        aws_stack.stack_status.downcase.to_sym
+        aws_stack&.stack_status&.downcase&.to_sym
       end
 
       def outputs

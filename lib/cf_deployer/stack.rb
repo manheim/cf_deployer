@@ -152,7 +152,7 @@ module CfDeployer
     end
 
     def stack_status
-      @cf_driver.stack_status
+      @cf_driver.stack_status || :does_not_exist
     end
 
     def wait_for_stack_op_terminate
