@@ -68,7 +68,7 @@ describe 'CloudFormation' do
 
     it 'returns false if no updates were performed (because no difference in template)' do
       cloud_formation = CfDeployer::Driver::CloudFormation.new 'my_stack'
-      expect(cloudFormation).to receive(:update_stack).and_raise(Aws::CloudFormation::Errors::AlreadyExistsException.new(nil, 'No updates are to be performed'))
+      expect(cloudFormation).to receive(:update_stack).and_raise(Aws::CloudFormation::Errors::ValidationError.new(nil, 'No updates are to be performed'))
       result = nil
 
       CfDeployer::Driver::DryRun.disable_for do

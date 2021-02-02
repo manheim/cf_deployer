@@ -21,7 +21,12 @@ module CfDeployer
       capabilities = @context[:capabilities] || []
       notify = @context[:notify] || []
       tags = @context[:tags] || {}
-      params = to_str(@context[:inputs].select{|key, value| @context[:defined_parameters].keys.include?(key)})
+      params = @context[:inputs].select{|key, value| @context[:defined_parameters].keys.include?(key)}
+        .map do |key, value|
+          next nil unless @context[:defined_parameters].keys.include?(key)
+          { parameter_key: key.to_s, parameter_value: value.to_s }
+        end.compact
+
       CfDeployer::Driver::DryRun.guard "Skipping deploy" do
         if exists?
           override_policy_json = nil
@@ -117,10 +122,6 @@ module CfDeployer
 
     private
 
-    def to_str(hash)
-      hash.each { |k,v| hash[k] = v.to_s }
-    end
-
     def update_stack(template, params, capabilities, tags, override_policy_json)
       Log.info "Updating stack #{@stack_name}..."
       args = {
@@ -139,7 +140,7 @@ module CfDeployer
       args = {
         :disable_rollback => true,
         :capabilities => capabilities,
-        :notify => notify,
+        :notification_arns => notify,
         :tags => reformat_tags(tags),
         :parameters => params
       }
@@ -182,7 +183,7 @@ module CfDeployer
     end
 
     def reformat_tags tags_hash
-      tags_hash.keys.map { |key| { 'Key' => key.to_s, 'Value' => tags_hash[key].to_s } }
+      tags_hash.keys.map { |key| { :key => key.to_s, :value => tags_hash[key].to_s } }
     end
   end
 end

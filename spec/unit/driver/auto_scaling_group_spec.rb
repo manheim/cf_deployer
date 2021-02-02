@@ -27,13 +27,13 @@ describe 'Autoscaling group driver' do
 
   describe '#warm_up' do
     it 'should warm up the group to the desired size' do
-      expect(group).to receive(:set_desired_capacity).with(2)
+      expect(group).to receive(:set_desired_capacity).with(desired_capacity: 2)
       expect(@driver).to receive(:wait_for_desired_capacity)
       @driver.warm_up 2
     end
 
     it 'should wait for the warm up of the group even if desired is the same as the minimum' do
-      expect(group).to receive(:set_desired_capacity).with(1)
+      expect(group).to receive(:set_desired_capacity).with(desired_capacity: 1)
       expect(@driver).to receive(:wait_for_desired_capacity)
       @driver.warm_up 1
     end
@@ -45,7 +45,7 @@ describe 'Autoscaling group driver' do
     end
 
     it 'should warm up to maximum if desired number is greater than maximum size of group' do
-      expect(group).to receive(:set_desired_capacity).with(4)
+      expect(group).to receive(:set_desired_capacity).with(desired_capacity: 4)
       expect(@driver).to receive(:wait_for_desired_capacity)
       @driver.warm_up 5
     end
@@ -183,7 +183,7 @@ describe 'Autoscaling group driver' do
   describe '#cool_down' do
     it 'should cool down group' do
       expect(group).to receive(:update).with({min_size: 0, max_size: 0})
-      expect(group).to receive(:set_desired_capacity).with(0)
+      expect(group).to receive(:set_desired_capacity).with(desired_capacity: 0)
       @driver.cool_down
     end
   end

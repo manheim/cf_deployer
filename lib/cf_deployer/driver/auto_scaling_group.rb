@@ -22,7 +22,7 @@ module CfDeployer
         Log.info "warming up auto scaling group #{group_name} to #{desired}"
 
         CfDeployer::Driver::DryRun.guard "Skipping ASG warmup" do
-          aws_group.set_desired_capacity desired
+          aws_group.set_desired_capacity({desired_capacity: desired})
           wait_for_desired_capacity
         end
       end
@@ -38,7 +38,7 @@ module CfDeployer
         Log.info "Cooling down #{group_name}"
         CfDeployer::Driver::DryRun.guard "Skipping ASG cooldown" do
           aws_group.update :min_size => 0, :max_size => 0
-          aws_group.set_desired_capacity 0
+          aws_group.set_desired_capacity({desired_capacity: 0})
         end
       end
 
