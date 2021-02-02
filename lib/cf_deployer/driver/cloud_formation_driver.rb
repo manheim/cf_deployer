@@ -12,14 +12,14 @@ module CfDeployer
 
       def create_stack template, opts
         CfDeployer::Driver::DryRun.guard "Skipping create_stack" do
-          cloud_formation.stacks.create @stack_name, template, opts
+          cloud_formation.create_stack(opts.merge(stack_name: @stack_name, template_body: template))
         end
       end
 
       def update_stack template, opts
         begin
           CfDeployer::Driver::DryRun.guard "Skipping update_stack" do
-            aws_stack.update opts.merge(:template => template)
+            cloud_formation.update_stack(opts.merge(stack_name: @stack_name, template_body: template))
           end
 
         rescue Aws::CloudFormation::Errors::AlreadyExistsException => e

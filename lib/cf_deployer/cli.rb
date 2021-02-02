@@ -93,7 +93,7 @@ module CfDeployer
 
       def set_log_level
         if options[:'log-level'] == 'aws-debug'
-          # CfDeployer::Log.level = 'debug'
+          CfDeployer::Log.level = 'debug'
           Aws.config.update(:logger => Logger.new($stdout))
         else
           CfDeployer::Log.level = options[:'log-level']

@@ -33,6 +33,8 @@ describe 'CloudFormation' do
 
   before(:each) do
     allow(Aws::CloudFormation::Client).to receive(:new) { cloudFormation }
+    allow(cloudFormation).to receive(:create_stack)
+    allow(cloudFormation).to receive(:update_stack)
   end
 
   it 'should get outputs of stack' do
@@ -66,7 +68,7 @@ describe 'CloudFormation' do
 
     it 'returns false if no updates were performed (because no difference in template)' do
       cloud_formation = CfDeployer::Driver::CloudFormation.new 'my_stack'
-      expect(cloud_formation).to receive(:aws_stack).and_raise(Aws::CloudFormation::Errors::AlreadyExistsException.new(nil, 'No updates are to be performed'))
+      expect(cloudFormation).to receive(:update_stack).and_raise(Aws::CloudFormation::Errors::AlreadyExistsException.new(nil, 'No updates are to be performed'))
       result = nil
 
       CfDeployer::Driver::DryRun.disable_for do
@@ -78,14 +80,13 @@ describe 'CloudFormation' do
 
     it 'returns true when updates are performed' do
       cloud_formation = CfDeployer::Driver::CloudFormation.new 'my_stack'
-      aws_stack = double(:update => :did_something)
-      expect(cloud_formation).to receive(:aws_stack).and_return aws_stack
       result = nil
 
       CfDeployer::Driver::DryRun.disable_for do
         result = cloud_formation.update_stack :template, {}
       end
 
+      expect(cloudFormation).to have_received(:update_stack)
       expect(result).to be_truthy
     end
 
