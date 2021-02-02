@@ -90,8 +90,6 @@ module CfDeployer
       private
 
       def aws_group
-        puts '*' * 80
-        puts group_name
         @my_group ||= Aws::AutoScaling::AutoScalingGroup.new(group_name)
       end
 
