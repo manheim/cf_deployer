@@ -11,12 +11,6 @@ module CfDeployer
       end
 
       def create_stack template, opts
-        puts 'template: -----------------------------------'
-        puts template
-        puts '-----------------------------------'
-        puts 'opts: -----------------------------------'
-        puts opts
-        puts '-----------------------------------'
         CfDeployer::Driver::DryRun.guard "Skipping create_stack" do
           cloud_formation.create_stack(opts.merge(stack_name: @stack_name, template_body: template))
         end
