@@ -45,7 +45,7 @@ http_interactions:
         \     </member>\n    </AutoScalingGroups>\n  </DescribeAutoScalingGroupsResult>\n
         \ <ResponseMetadata>\n    <RequestId>12345</RequestId>\n
         \ </ResponseMetadata>\n</DescribeAutoScalingGroupsResponse>\n"
-    http_version: 
+    http_version:
   recorded_at: Tue, 27 Sep 2016 05:47:40 GMT
 - request:
     method: post
@@ -65,7 +65,7 @@ http_interactions:
         \     </member>\n    </AutoScalingInstances>\n  </DescribeAutoScalingInstancesResult>\n
         \ <ResponseMetadata>\n    <RequestId>12346</RequestId>\n
         \ </ResponseMetadata>\n</DescribeAutoScalingInstancesResponse>\n"
-    http_version: 
+    http_version:
   recorded_at: Tue, 27 Sep 2016 05:47:40 GMT
 - request:
     method: post

@@ -11,8 +11,8 @@ describe 'DryRun' do
           enabled_in_block = CfDeployer::Driver::DryRun.enabled?
         end
 
-        expect(enabled_in_block).to be_true
-        expect(CfDeployer::Driver::DryRun.enabled?).to be_false
+        expect(enabled_in_block).to be_truthy
+        expect(CfDeployer::Driver::DryRun.enabled?).to be_falsey
       end
     end
 
@@ -27,8 +27,8 @@ describe 'DryRun' do
           end
         end.to raise_error('boom')
 
-        expect(enabled_in_block).to be_true
-        expect(CfDeployer::Driver::DryRun.enabled?).to be_false
+        expect(enabled_in_block).to be_truthy
+        expect(CfDeployer::Driver::DryRun.enabled?).to be_falsey
       end
     end
   end
@@ -42,8 +42,8 @@ describe 'DryRun' do
           enabled_in_block = CfDeployer::Driver::DryRun.enabled?
         end
 
-        expect(enabled_in_block).to be_false
-        expect(CfDeployer::Driver::DryRun.enabled?).to be_true
+        expect(enabled_in_block).to be_falsey
+        expect(CfDeployer::Driver::DryRun.enabled?).to be_truthy
       end
     end
 
@@ -58,8 +58,8 @@ describe 'DryRun' do
           end
         end.to raise_error('boom')
 
-        expect(enabled_in_block).to be_false
-        expect(CfDeployer::Driver::DryRun.enabled?).to be_true
+        expect(enabled_in_block).to be_falsey
+        expect(CfDeployer::Driver::DryRun.enabled?).to be_truthy
       end
     end
   end

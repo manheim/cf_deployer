@@ -21,7 +21,12 @@ module CfDeployer
       capabilities = @context[:capabilities] || []
       notify = @context[:notify] || []
       tags = @context[:tags] || {}
-      params = to_str(@context[:inputs].select{|key, value| @context[:defined_parameters].keys.include?(key)})
+      params = @context[:inputs].select{|key, value| @context[:defined_parameters].keys.include?(key)}
+        .map do |key, value|
+          next nil unless @context[:defined_parameters].keys.include?(key)
+          { parameter_key: key.to_s, parameter_value: value.to_s }
+        end.compact
+
       CfDeployer::Driver::DryRun.guard "Skipping deploy" do
         if exists?
           override_policy_json = nil
@@ -56,7 +61,12 @@ module CfDeployer
     def find_output key
       begin
         @cf_driver.query_output(key)
-      rescue AWS::CloudFormation::Errors::ValidationError => e
+      rescue Aws::CloudFormation::Errors::OperationStatusCheckFailedException => e
+        raise ResourceNotInReadyState.new("Resource stack not in ready state yet, perhaps you should provision it first?")
+      rescue => e
+        puts '*' * 80
+        puts e
+        puts '*' * 80
         raise ResourceNotInReadyState.new("Resource stack not in ready state yet, perhaps you should provision it first?")
       end
     end
@@ -88,20 +98,18 @@ module CfDeployer
     end
 
     def resource_statuses
-      AWS.memoize do
-        resources = @cf_driver.resource_statuses.merge( { :asg_instances => {}, :instances => {} } )
-        if resources['AWS::AutoScaling::AutoScalingGroup']
-          resources['AWS::AutoScaling::AutoScalingGroup'].keys.each do |asg_name|
-            resources[:asg_instances][asg_name] = CfDeployer::Driver::AutoScalingGroup.new(asg_name).instance_statuses
-          end
+      resources = @cf_driver.resource_statuses.merge( { :asg_instances => {}, :instances => {} } )
+      if resources['AWS::AutoScaling::AutoScalingGroup']
+        resources['AWS::AutoScaling::AutoScalingGroup'].keys.each do |asg_name|
+          resources[:asg_instances][asg_name] = CfDeployer::Driver::AutoScalingGroup.new(asg_name).instance_statuses
         end
-        if resources['AWS::EC2::Instance']
-          resources['AWS::EC2::Instance'].keys.each do |instance_id|
-            resources[:instances][instance_id] = CfDeployer::Driver::Instance.new(instance_id).status
-          end
-        end
-        resources
       end
+      if resources['AWS::EC2::Instance']
+        resources['AWS::EC2::Instance'].keys.each do |instance_id|
+          resources[:instances][instance_id] = CfDeployer::Driver::Instance.new(instance_id).status
+        end
+      end
+      resources
     end
 
     def name
@@ -113,10 +121,6 @@ module CfDeployer
     end
 
     private
-
-    def to_str(hash)
-      hash.each { |k,v| hash[k] = v.to_s }
-    end
 
     def update_stack(template, params, capabilities, tags, override_policy_json)
       Log.info "Updating stack #{@stack_name}..."
@@ -136,7 +140,7 @@ module CfDeployer
       args = {
         :disable_rollback => true,
         :capabilities => capabilities,
-        :notify => notify,
+        :notification_arns => notify,
         :tags => reformat_tags(tags),
         :parameters => params
       }
@@ -148,7 +152,7 @@ module CfDeployer
     end
 
     def stack_status
-      @cf_driver.stack_status
+      @cf_driver.stack_status || :does_not_exist
     end
 
     def wait_for_stack_op_terminate
@@ -167,19 +171,19 @@ module CfDeployer
           begin
             Log.info "current status: #{stack_status}"
             sleep 15
-          rescue AWS::CloudFormation::Errors::ValidationError => e
-            if e.message =~ /does not exist/
-              break # This is what we wanted anyways
-            else
-              raise e
-            end
+          rescue Aws::CloudFormation::Errors::StackSetNotFoundException => e
+            break # This is what we wanted anyway
+          rescue => e
+            puts '*' * 80
+            puts e
+            raise e
           end
         end
       }
     end
 
     def reformat_tags tags_hash
-      tags_hash.keys.map { |key| { 'Key' => key.to_s, 'Value' => tags_hash[key].to_s } }
+      tags_hash.keys.map { |key| { :key => key.to_s, :value => tags_hash[key].to_s } }
     end
   end
 end

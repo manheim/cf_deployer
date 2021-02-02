@@ -39,7 +39,7 @@ module CfDeployer
 
     def load_yaml(text)
       YAML.load text
-    rescue Psych::SyntaxError => e
+    rescue ::Psych::SyntaxError => e
       error_document text
       raise e
     rescue

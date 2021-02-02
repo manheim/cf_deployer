@@ -20,7 +20,7 @@ module Fakes
         instance_variable_set "@#{attrib}", (options[attrib] || defaults[attrib])
       end
 
-      @key_pair = ::AWS::EC2::KeyPair.new (options[:key_pair] || defaults[:key_pair] )
+      @key_pair = ::Aws::EC2::KeyPair.new (options[:key_pair] || defaults[:key_pair] )
     end
 
     def inspect

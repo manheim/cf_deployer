@@ -2,8 +2,8 @@ require 'spec_helper'
 
 describe 'CloudFormation' do
   let(:outputs) { [output1, output2] }
-  let(:output1) { double('output1', :key => 'key1', :value => 'value1')}
-  let(:output2) { double('output2', :key => 'key2', :value => 'value2')}
+  let(:output1) { double('output1', :output_key => 'key1', :output_value => 'value1')}
+  let(:output2) { double('output2', :output_key => 'key2', :output_value => 'value2')}
   let(:parameters) { double('parameters')}
   let(:resource_summaries) { [
       {
@@ -22,24 +22,27 @@ describe 'CloudFormation' do
           :resource_status => 'STATUS_2'
       }
   ] }
-  let(:stack) { double('stack', :outputs => outputs, :parameters => parameters, :resource_summaries => resource_summaries) }
+  let(:stack) { double('stack', :stack_name => 'testStack', :outputs => outputs, :parameters => parameters) }
+  let(:cloudFormationStacks) { [stack] }
   let(:cloudFormation) {
     double('cloudFormation',
-           :stacks =>
-           {'testStack' => stack
-           })
+      :describe_stacks => double(:stacks => cloudFormationStacks),
+      :list_stack_resources => double(:stack_resource_summaries => resource_summaries)
+    )
   }
 
   before(:each) do
-    allow(AWS::CloudFormation).to receive(:new) { cloudFormation }
+    allow(Aws::CloudFormation::Client).to receive(:new) { cloudFormation }
+    allow(cloudFormation).to receive(:create_stack)
+    allow(cloudFormation).to receive(:update_stack)
   end
 
   it 'should get outputs of stack' do
-    CfDeployer::Driver::CloudFormation.new('testStack').outputs.should eq({'key1' => 'value1', 'key2' => 'value2'})
+    expect(CfDeployer::Driver::CloudFormation.new('testStack').outputs).to eq({'key1' => 'value1', 'key2' => 'value2'})
   end
 
   it 'should get parameters of stack' do
-    CfDeployer::Driver::CloudFormation.new('testStack').parameters.should eq(parameters)
+    expect(CfDeployer::Driver::CloudFormation.new('testStack').parameters).to eq(parameters)
   end
 
   context 'update_stack' do
@@ -60,32 +63,31 @@ describe 'CloudFormation' do
         result = cloud_formation.update_stack :template, {}
       end
 
-      expect(result).to be_false
+      expect(result).to be_falsey
     end
 
     it 'returns false if no updates were performed (because no difference in template)' do
       cloud_formation = CfDeployer::Driver::CloudFormation.new 'my_stack'
-      expect(cloud_formation).to receive(:aws_stack).and_raise(AWS::CloudFormation::Errors::ValidationError.new('No updates are to be performed'))
+      expect(cloudFormation).to receive(:update_stack).and_raise(Aws::CloudFormation::Errors::ValidationError.new(nil, 'No updates are to be performed'))
       result = nil
 
       CfDeployer::Driver::DryRun.disable_for do
         result = cloud_formation.update_stack :template, {}
       end
 
-      expect(result).to be_false
+      expect(result).to be_falsey
     end
 
     it 'returns true when updates are performed' do
       cloud_formation = CfDeployer::Driver::CloudFormation.new 'my_stack'
-      aws_stack = double(:update => :did_something)
-      expect(cloud_formation).to receive(:aws_stack).and_return aws_stack
       result = nil
 
       CfDeployer::Driver::DryRun.disable_for do
         result = cloud_formation.update_stack :template, {}
       end
 
-      expect(result).to be_true
+      expect(cloudFormation).to have_received(:update_stack)
+      expect(result).to be_truthy
     end
 
   end
@@ -102,7 +104,7 @@ describe 'CloudFormation' do
           }
       }
 
-      CfDeployer::Driver::CloudFormation.new('testStack').resource_statuses.should eq(expected)
+      expect(CfDeployer::Driver::CloudFormation.new('testStack').resource_statuses).to eq(expected)
     end
   end
 end
