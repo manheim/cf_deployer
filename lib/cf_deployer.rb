@@ -44,7 +44,8 @@ require_relative 'cf_deployer/defaults'
 
 module CfDeployer
 
-  # Aws.config(:max_retries => 20)
+  aws_config = Seahorse::Client::Configuration.new
+  aws_config.add_option(:max_retries, 20)
 
   def self.config opts
     config = self.parseconfig opts, false
