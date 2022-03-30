@@ -84,7 +84,7 @@ module CfDeployer
       end
 
       def aws_stack
-        cloud_formation.describe_stacks.stacks.find{|s| s.stack_name == @stack_name}
+        cloud_formation.describe_stacks({stack_name: @stack_name}).stacks.first
       end
 
     end

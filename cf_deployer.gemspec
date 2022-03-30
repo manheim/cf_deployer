@@ -12,7 +12,7 @@ Gem::Specification.new do |gem|
   gem.add_runtime_dependency 'json','~> 2.5'
   gem.add_runtime_dependency 'aws-sdk-autoscaling', '~> 1.53'
   gem.add_runtime_dependency 'aws-sdk-core','~> 3.111'
-  gem.add_runtime_dependency 'aws-sdk-cloudformation', '~> 1.46'
+  gem.add_runtime_dependency 'aws-sdk-cloudformation', '~> 1.68'
   gem.add_runtime_dependency 'aws-sdk-ec2', '~> 1.221'
   gem.add_runtime_dependency 'aws-sdk-elasticloadbalancing', '~> 1.29'
   gem.add_runtime_dependency 'aws-sdk-route53', '~> 1.45'
