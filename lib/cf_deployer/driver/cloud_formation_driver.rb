@@ -84,7 +84,11 @@ module CfDeployer
       end
 
       def aws_stack
-        cloud_formation.describe_stacks({stack_name: @stack_name}).stacks.first
+        begin
+          cloud_formation.describe_stacks({stack_name: @stack_name}).stacks.first
+        rescue Aws::CloudFormation::Errors::ValidationError => e
+          return nil
+        end
       end
 
     end
