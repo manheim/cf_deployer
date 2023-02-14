@@ -220,7 +220,7 @@ describe CfDeployer::Stack do
       allow(@stack).to receive(:exists?).and_return(true, true)
       allow(@stack).to receive(:stack_status).and_raise(Aws::CloudFormation::Errors::StackSetNotFoundException.new(nil, 'the stack does not exist'))
       expect(@cf_driver).to receive(:delete_stack)
-      expect {@stack.delete}.not_to raise_error(NameError)
+      expect {@stack.delete}.not_to raise_error
     end
 
     it 'should raise an error if a validation error is thrown not about stack does not exist' do
