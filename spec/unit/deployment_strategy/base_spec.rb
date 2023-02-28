@@ -57,12 +57,11 @@ describe 'Base Deployment Strategy' do
 
     it "should return nil if there is no active stack" do
       the_stack = double()
-      the_stack.should_receive(:exists?).and_return(false)
-      the_stack.should_not_receive(:template)
+      expect(the_stack).to receive(:exists?).and_return(false)
+      expect(the_stack).not_to receive(:template)
 
       strategy = CfDeployer::DeploymentStrategy.create('myApp', 'uat', 'web', @context[:components][:web])
-      strategy.should_receive(:active_stack).and_return(the_stack)
-      # strategy.should_not_receive(:get_parameters_outputs)
+      expect(strategy).to receive(:active_stack).and_return(the_stack)
 
       expect( strategy.active_template ).to eq(nil)
     end
@@ -71,11 +70,11 @@ describe 'Base Deployment Strategy' do
       the_template = double
 
       the_stack = double
-      the_stack.should_receive(:exists?).and_return(true)
-      the_stack.should_receive(:template).and_return(the_template)
+      expect(the_stack).to receive(:exists?).and_return(true)
+      expect(the_stack).to receive(:template).and_return(the_template)
 
       strategy = CfDeployer::DeploymentStrategy.create('myApp', 'uat', 'web', @context[:components][:web])
-      strategy.should_receive(:active_stack).and_return(the_stack)
+      expect(strategy).to receive(:active_stack).and_return(the_stack)
 
       expect( strategy.active_template ).to eq(the_template)
     end
@@ -96,8 +95,8 @@ describe 'Base Deployment Strategy' do
 
     it "should run the specified hook" do
       hook = double()
-      CfDeployer::Hook.should_receive(:new).and_return(hook)
-      hook.should_receive(:run)
+      expect(CfDeployer::Hook).to receive(:new).and_return(hook)
+      expect(hook).to receive(:run)
 
       strategy = CfDeployer::DeploymentStrategy.create('myApp', 'uat', 'web', @context[:components][:web])
       strategy.instance_variable_set('@params_and_outputs_resolved', true)
@@ -107,30 +106,30 @@ describe 'Base Deployment Strategy' do
     it "should not try to resolve parameters and outputs they're already initialized" do
       strategy = CfDeployer::DeploymentStrategy.create('myApp', 'uat', 'web', @context[:components][:web])
       strategy.instance_variable_set('@params_and_outputs_resolved', true)
-      strategy.should_not_receive(:get_parameters_outputs)
+      expect(strategy).not_to receive(:get_parameters_outputs)
       strategy.run_hook(:some_hook)
     end
 
     it "should not try to resolve parameters and outputs if there's no running stack" do
       the_stack = double()
-      the_stack.should_receive(:exists?).and_return(false)
-      the_stack.should_receive(:name).and_return("thestack")
+      expect(the_stack).to receive(:exists?).and_return(false)
+      expect(the_stack).to receive(:name).and_return("thestack")
 
       strategy = CfDeployer::DeploymentStrategy.create('myApp', 'uat', 'web', @context[:components][:web])
-      strategy.should_receive(:active_stack).and_return(the_stack)
-      strategy.should_not_receive(:get_parameters_outputs)
+      expect(strategy).to receive(:active_stack).and_return(the_stack)
+      expect(strategy).not_to receive(:get_parameters_outputs)
       strategy.run_hook(:some_hook)
     end
 
     it "should not try to run a hook if there's no running stack" do
-      CfDeployer::Hook.should_not_receive(:new)
+      expect(CfDeployer::Hook).not_to receive(:new)
 
       the_stack = double()
-      the_stack.should_receive(:exists?).and_return(false)
-      the_stack.should_receive(:name).and_return("thestack")
+      expect(the_stack).to receive(:exists?).and_return(false)
+      expect(the_stack).to receive(:name).and_return("thestack")
 
       strategy = CfDeployer::DeploymentStrategy.create('myApp', 'uat', 'web', @context[:components][:web])
-      strategy.should_receive(:active_stack).and_return(the_stack)
+      expect(strategy).to receive(:active_stack).and_return(the_stack)
       strategy.run_hook(:some_hook)
     end
   end

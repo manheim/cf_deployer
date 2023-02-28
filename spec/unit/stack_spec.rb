@@ -26,10 +26,10 @@ describe CfDeployer::Stack do
       expected_opt = {
         :disable_rollback => true,
         :capabilities => [],
-        :notify => ['topic1_arn', 'topic2_arn'],
-        :tags => [{'Key' => 'app', 'Value' => 'app1'},
-                  {'Key' => 'env', 'Value' => 'dev'}],
-        :parameters => {:foo => 'bar'}
+        :notification_arns => ['topic1_arn', 'topic2_arn'],
+        :tags => [{:key => 'app', :value => 'app1'},
+                  {:key => 'env', :value => 'dev'}],
+        :parameters => [{:parameter_key => 'foo', :parameter_value => 'bar'}]
       }
       expect(@cf_driver).to receive(:create_stack).with(template, expected_opt)
       stack = CfDeployer::Stack.new('test','web', @config)
@@ -47,10 +47,10 @@ describe CfDeployer::Stack do
       expected_opt = {
         :disable_rollback => true,
         :capabilities => [],
-        :notify => ['topic1_arn', 'topic2_arn'],
-        :tags => [{'Key' => 'app', 'Value' => 'app1'},
-                  {'Key' => 'env', 'Value' => 'dev'}],
-        :parameters => {:foo => 'bar'},
+        :notification_arns => ['topic1_arn', 'topic2_arn'],
+        :tags => [{:key => 'app', :value => 'app1'},
+                  {:key => 'env', :value => 'dev'}],
+        :parameters => [{:parameter_key => 'foo', :parameter_value => 'bar'}],
         :stack_policy_body => create_policy
       }
       expect(@cf_driver).to receive(:create_stack).with(template, expected_opt)
@@ -65,7 +65,7 @@ describe CfDeployer::Stack do
       allow(@cf_driver).to receive(:stack_status) { :create_complete }
       expected_opt = {
         :capabilities => [],
-        :parameters => {:foo => 'bar'}
+        :parameters => [{:parameter_key => 'foo', :parameter_value => 'bar'}]
       }
       expect(@cf_driver).to receive(:update_stack).with(template, expected_opt)
       stack = CfDeployer::Stack.new('test','web', @config)
@@ -79,7 +79,7 @@ describe CfDeployer::Stack do
       allow(@cf_driver).to receive(:stack_status) { :create_complete }
       expected_opt = {
         :capabilities => [],
-        :parameters => {:foo => 'bar'}
+        :parameters => [{:parameter_key => 'foo', :parameter_value => 'bar'}]
       }
       expect(@cf_driver).to receive(:update_stack).with(template, expected_opt).and_return(true)
       stack = CfDeployer::Stack.new('test','web', @config)
@@ -94,7 +94,7 @@ describe CfDeployer::Stack do
       allow(@cf_driver).to receive(:stack_status) { :create_complete }
       expected_opt = {
         :capabilities => [],
-        :parameters => {:foo => 'bar'}
+        :parameters => [{:parameter_key => 'foo', :parameter_value => 'bar'}]
       }
       expect(@cf_driver).to receive(:update_stack).with(template, expected_opt).and_return(false)
       stack = CfDeployer::Stack.new('test','web', @config)
@@ -109,7 +109,7 @@ describe CfDeployer::Stack do
       allow(@cf_driver).to receive(:stack_status) { :update_rollback_complete }
       expected_opt = {
         :capabilities => [],
-        :parameters => {:foo => 'bar'}
+        :parameters => [{:parameter_key => 'foo', :parameter_value => 'bar'}]
       }
       expect(@cf_driver).to receive(:update_stack).with(template, expected_opt).and_return(false)
       stack = CfDeployer::Stack.new('test','web', @config)
@@ -126,7 +126,7 @@ describe CfDeployer::Stack do
       allow(@cf_driver).to receive(:stack_status) { :create_complete }
       expected_opt = {
         :capabilities => [],
-        :parameters => {:foo => 'bar'},
+        :parameters => [{:parameter_key => 'foo', :parameter_value => 'bar'}],
         :stack_policy_during_update_body => override_policy
       }
       expect(@cf_driver).to receive(:update_stack).with(template, expected_opt)
@@ -168,7 +168,7 @@ describe CfDeployer::Stack do
   context '#output' do
     it 'should get output value' do
       expect(@cf_driver).to receive(:query_output).with('mykey'){ 'myvalue'}
-      @stack.output('mykey').should eq('myvalue')
+      expect(@stack.output('mykey')).to eq('myvalue')
     end
 
     it 'should get error if output is empty' do
@@ -180,12 +180,12 @@ describe CfDeployer::Stack do
   context '#find_output' do
     it 'should get output value' do
       expect(@cf_driver).to receive(:query_output).with('mykey'){ 'myvalue'}
-      @stack.find_output('mykey').should eq('myvalue')
+      expect(@stack.find_output('mykey')).to eq('myvalue')
     end
 
     it 'should return nil for non-existent value' do
       expect(@cf_driver).to receive(:query_output).with('mykey'){ nil }
-      @stack.find_output('mykey').should be(nil)
+      expect(@stack.find_output('mykey')).to be(nil)
     end
   end
 
@@ -218,16 +218,16 @@ describe CfDeployer::Stack do
 
     it 'should be fine to get not exist error after deletion' do
       allow(@stack).to receive(:exists?).and_return(true, true)
-      allow(@stack).to receive(:stack_status).and_raise(AWS::CloudFormation::Errors::ValidationError.new('the stack does not exist'))
+      allow(@stack).to receive(:stack_status).and_raise(Aws::CloudFormation::Errors::StackSetNotFoundException.new(nil, 'the stack does not exist'))
       expect(@cf_driver).to receive(:delete_stack)
       expect {@stack.delete}.not_to raise_error
     end
 
     it 'should raise an error if a validation error is thrown not about stack does not exist' do
       allow(@stack).to receive(:exists?).and_return(true, true)
-      allow(@stack).to receive(:stack_status).and_raise(AWS::CloudFormation::Errors::ValidationError.new('I am an error'))
+      allow(@stack).to receive(:stack_status).and_raise(Aws::CloudFormation::Errors::InvalidOperationException.new(nil, 'I am an error'))
       expect(@cf_driver).to receive(:delete_stack)
-      expect {@stack.delete}.to raise_error
+      expect {@stack.delete}.to raise_error(Aws::CloudFormation::Errors::InvalidOperationException)
     end
   end
 

@@ -3,7 +3,7 @@ module CfDeployer
     class AutoScalingGroup
       extend Forwardable
 
-      def_delegators :aws_group, :auto_scaling_instances, :ec2_instances, :load_balancers, :desired_capacity
+      def_delegators :aws_group, :instances, :desired_capacity, :load_balancer_names
 
       attr_reader :group_name, :group
 
@@ -22,7 +22,7 @@ module CfDeployer
         Log.info "warming up auto scaling group #{group_name} to #{desired}"
 
         CfDeployer::Driver::DryRun.guard "Skipping ASG warmup" do
-          aws_group.set_desired_capacity desired
+          aws_group.set_desired_capacity({desired_capacity: desired})
           wait_for_desired_capacity
         end
       end
@@ -38,14 +38,14 @@ module CfDeployer
         Log.info "Cooling down #{group_name}"
         CfDeployer::Driver::DryRun.guard "Skipping ASG cooldown" do
           aws_group.update :min_size => 0, :max_size => 0
-          aws_group.set_desired_capacity 0
+          aws_group.set_desired_capacity({desired_capacity: 0})
         end
       end
 
       def instance_statuses
         instance_info = {}
-        ec2_instances.each do |instance|
-          instance_info[instance.id] = CfDeployer::Driver::Instance.new(instance).status
+        instances.each do |instance|
+          instance_info[instance.id] = CfDeployer::Driver::Instance.new(instance.id).status
         end
         instance_info
       end
@@ -63,34 +63,25 @@ module CfDeployer
       end
 
       def healthy_instance_ids
-        instances = auto_scaling_instances.select do |instance|
+        _instances = instances.select do |instance|
           'HEALTHY'.casecmp(instance.health_status) == 0
         end
-        instances.map(&:id)
+        _instances.map(&:id)
       end
 
       def in_service_instance_ids
-        elbs = load_balancers
-        return [] if elbs.empty?
+        elb_names = load_balancer_names
 
-        ids = elbs.collect(&:instances)
-                  .collect(&:health)
-                  .to_a
-                  .collect { |elb_healths|
-                     elb_healths.select { |health| health[:state] == 'InService' }
-                                .map { |health| health[:instance].id }
-                  }
+        return [] if elb_names.empty?
 
-        ids.inject(:&)
+        elb_driver.in_service_instance_ids elb_names
       end
 
       def healthy_instance_count
-        AWS.memoize do
-          instances = healthy_instance_ids
-          instances &= in_service_instance_ids unless load_balancers.empty?
-          Log.info "Healthy instance count: #{instances.count}"
-          instances.count
-        end
+        instances = healthy_instance_ids
+        instances &= in_service_instance_ids unless load_balancer_names.empty?
+        Log.info "Healthy instance count: #{instances.count}"
+        instances.count
       rescue => e
         Log.error "Unable to determine healthy instance count due to error: #{e.message}"
         -1
@@ -99,7 +90,11 @@ module CfDeployer
       private
 
       def aws_group
-        @my_group ||= AWS::AutoScaling.new.groups[group_name]
+        @my_group ||= Aws::AutoScaling::AutoScalingGroup.new(group_name)
+      end
+
+      def elb_driver
+        @elb_driver ||= Elb.new
       end
     end
   end

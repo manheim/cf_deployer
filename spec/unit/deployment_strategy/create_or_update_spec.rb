@@ -33,7 +33,7 @@ describe 'CreateOrUpdate Strategy' do
     expect(@after_create_hook).to receive(:run) do |given_context|
       hook_context = given_context
     end
-    @stack.should_receive(:exists?).and_return(false)
+    expect(@stack).to receive(:exists?).and_return(false)
     expect(@stack).to receive(:deploy)
     @create_or_update.deploy
     expect(hook_context[:parameters]).to eq( {'vpc' => 'myvpc'} )
@@ -45,7 +45,7 @@ describe 'CreateOrUpdate Strategy' do
     expect(@after_update_hook).to receive(:run) do |given_context|
       hook_context = given_context
     end
-    @stack.should_receive(:exists?).and_return(true)
+    expect(@stack).to receive(:exists?).and_return(true)
     expect(@stack).to receive(:deploy)
     @create_or_update.deploy
     expect(hook_context[:parameters]).to eq( {'vpc' => 'myvpc'} )
@@ -60,7 +60,7 @@ describe 'CreateOrUpdate Strategy' do
       context = @context[:components][:base]
       context[:settings] = {}
       context[:settings][:'auto-scaling-group-name-output'] = ['AutoScalingGroupID']
-      @stack.should_receive(:exists?).and_return(false)
+      expect(@stack).to receive(:exists?).and_return(false)
       allow(@stack).to receive(:find_output).with('AutoScalingGroupID') { 'asg_name' }
       allow(CfDeployer::Driver::AutoScalingGroup).to receive(:new).with('asg_name') { asg_driver }
       allow(asg_driver).to receive(:describe) { {desired:2, min:1, max:3} }
@@ -74,19 +74,19 @@ describe 'CreateOrUpdate Strategy' do
 
   it 'should tell if stack exists' do
     expect(@stack).to receive(:exists?){true}
-    @create_or_update.exists?.should eq(true)
+    expect(@create_or_update.exists?).to eq(true)
   end
 
   it 'should get stack output' do
     allow(@stack).to receive(:exists?){true}
     expect(@stack).to receive(:output).with(:a_key){ "output_value" }
-    @create_or_update.output_value(:a_key).should eq("output_value")
+    expect(@create_or_update.output_value(:a_key)).to eq("output_value")
   end
 
   it 'should get the information where the value comes from if the stack does not exist' do
     allow(@stack).to receive(:exists?){false}
     expect(@stack).not_to receive(:output).with(anything)
-    @create_or_update.output_value(:a_key).should eq("The value will be referenced from the output a_key of undeployed component base")
+    expect(@create_or_update.output_value(:a_key)).to eq("The value will be referenced from the output a_key of undeployed component base")
   end
 
   context '#destroy' do
@@ -119,11 +119,11 @@ describe 'CreateOrUpdate Strategy' do
       allow(@stack).to receive(:exists?) { true }
     end
     it 'should get status from stack' do
-      @create_or_update.status.should eq({ 'base-uat' => {status: 'deployed'}})
+      expect(@create_or_update.status).to eq({ 'base-uat' => {status: 'deployed'}})
     end
     it 'should get status from stack including resource info' do
       allow(@stack).to receive(:resource_statuses) { 'resource1' }
-      @create_or_update.status(true).should eq({ 'base-uat' => {status: 'deployed', resources: 'resource1'}})
+      expect(@create_or_update.status(true)).to eq({ 'base-uat' => {status: 'deployed', resources: 'resource1'}})
     end
   end
 end

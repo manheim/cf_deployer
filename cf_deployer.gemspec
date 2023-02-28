@@ -9,17 +9,23 @@ Gem::Specification.new do |gem|
   gem.homepage      = "http://github.com/manheim/cf_deployer"
   gem.license = 'MIT'
 
-  gem.add_runtime_dependency 'aws-sdk','1.44.0'
-  gem.add_runtime_dependency 'log4r'
-  gem.add_runtime_dependency 'thor'
-  gem.add_runtime_dependency 'rainbow'
+  gem.add_runtime_dependency 'aws-sdk-autoscaling', '~> 1.86'
+  gem.add_runtime_dependency 'aws-sdk-cloudformation', '~> 1.76'
+  gem.add_runtime_dependency 'aws-sdk-core', '~> 3.170'
+  gem.add_runtime_dependency 'aws-sdk-ec2', '~> 1.365'
+  gem.add_runtime_dependency 'aws-sdk-elasticloadbalancing', '~> 1.42'
+  gem.add_runtime_dependency 'aws-sdk-route53', '~> 1.71'
   gem.add_runtime_dependency 'diffy'
-  gem.add_development_dependency 'yard', '~> 0.8.7.6'
-  gem.add_development_dependency 'pry', '~> 0.10.1'
-  gem.add_development_dependency 'rspec', '2.14.1'
-  gem.add_development_dependency 'rake', '~> 10.3.0'
-  gem.add_development_dependency 'webmock', '~> 2.1.0'
-  gem.add_development_dependency 'vcr', '~> 2.9.3'
+  gem.add_runtime_dependency 'json', '~> 2.5'
+  gem.add_runtime_dependency 'log4r'
+  gem.add_runtime_dependency 'rainbow'
+  gem.add_runtime_dependency 'thor'
+  gem.add_development_dependency 'pry', '~> 0.13'
+  gem.add_development_dependency 'rake', '~> 13.0'
+  gem.add_development_dependency 'rspec', '3.10'
+  gem.add_development_dependency 'vcr', '~> 6.0'
+  gem.add_development_dependency 'webmock', '~> 3.11'
+  gem.add_development_dependency 'yard', '~> 0.9'
 
   gem.files         = `git ls-files`.split($\).reject {|f| f =~ /^samples\// }
   gem.executables   = gem.files.grep(%r{^bin/}).map{ |f| File.basename(f) }

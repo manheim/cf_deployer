@@ -2,7 +2,7 @@ module CfDeployer
   module Driver
     class Route53
       def initialize(aws_route53 = nil)
-        @aws_route53 = aws_route53 || AWS::Route53.new
+        @aws_route53 = aws_route53 || Aws::Route53::Client.new
       end
 
       def find_alias_target(hosted_zone_name, target_host_name)
@@ -17,7 +17,7 @@ module CfDeployer
         Log.info "set alias target --Hosted Zone: #{hosted_zone_name} --Host Name: #{target_host_name} --ELB DNS Name: #{elb_dnsname} --ELB Zone ID: #{elb_hosted_zone_id}"
         hosted_zone_name = trailing_dot(hosted_zone_name)
         target_host_name = trailing_dot(target_host_name)
-        hosted_zone = @aws_route53.hosted_zones.find { |z| z.name == hosted_zone_name }
+        hosted_zone = @aws_route53.list_hosted_zones_by_name.hosted_zones.find { |z| z.name == hosted_zone_name }
         raise ApplicationError.new('Target zone not found!') if hosted_zone.nil?
 
         change = {
@@ -34,7 +34,7 @@ module CfDeployer
         }
 
         batch = {
-          hosted_zone_id: hosted_zone.path,
+          hosted_zone_id: hosted_zone.id,
           change_batch: {
             changes: [change]
           }
@@ -53,6 +53,7 @@ module CfDeployer
           record_set.delete if record_set
         end
       end
+
       private
 
       def change_resource_record_sets_with_retry(batch)
@@ -60,7 +61,7 @@ module CfDeployer
         while attempts < 20
           begin
             attempts = attempts + 1
-            @aws_route53.client.change_resource_record_sets(batch)
+            @aws_route53.change_resource_record_sets(batch)
             return
           rescue Exception => e
             Log.info "Failed to update alias target, trying again in 20 seconds."
@@ -72,11 +73,13 @@ module CfDeployer
       end
 
       def get_hosted_zone(zone_name)
-        @aws_route53.hosted_zones.find { |z| z.name == trailing_dot(zone_name.downcase) }
+        @aws_route53.list_hosted_zones_by_name.hosted_zones.find { |z| z.name == trailing_dot(zone_name.downcase) }
       end
-      
+
       def get_record_set(hosted_zone, target_host_name)
-       hosted_zone.resource_record_sets.find { |r| r.name == trailing_dot(target_host_name.downcase) }
+        @aws_route53.list_resource_record_sets(hosted_zone_id: hosted_zone.id)
+          .resource_record_sets
+          .find { |r| r.name == trailing_dot(target_host_name.downcase) }
       end
 
       def trailing_dot(text)
